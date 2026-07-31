@@ -1,0 +1,1 @@
+# tests package marker (empty — pytest discovers tests by file name)

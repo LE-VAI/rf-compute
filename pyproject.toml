@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rf-compute"
+version = "0.1.0"
+description = "Wave-domain computation kernel — one API across the four RF-as-compute lineages (metamaterials, AirComp, microwave photonics, spin-torque neuromorphic). Research and education surface."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "rf-compute contributors" }]
+requires-python = ">=3.9"
+keywords = [
+    "rf",
+    "radio-frequency",
+    "analog-computing",
+    "wave-computing",
+    "metamaterials",
+    "aircomp",
+    "over-the-air-computation",
+    "microwave-photonics",
+    "neuromorphic",
+    "spin-torque",
+    "sdr",
+    "software-defined-radio",
+    "research",
+    "education",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+
+# numpy is the only hard dependency — the simulation backend runs on numpy alone.
+# SoapySDR is optional (only needed for the "sdr" backend); the kernel degrades
+# gracefully to simulation if SoapySDR is absent, so it's not a hard dep.
+dependencies = [
+    "numpy>=1.20",
+]
+
+[project.optional-dependencies]
+# SDR backend — install this extra when you have hardware and want to run
+# the real-RF walkthroughs:  pip install "rf-compute[sdr]"
+sdr = [
+    "SoapySDR>=0.8",
+]
+# Visualization — the walkthrough scripts use matplotlib for spectrum plots.
+# Optional because the kernel itself doesn't depend on it; only the example
+# scripts and walkthroughs do.
+viz = [
+    "matplotlib>=3.5",
+]
+# Development — for contributors running the test suite.
+# SoapySDR is intentionally NOT included here: it's a system library, not a
+# pip package, and `pip install SoapySDR` fails on platforms without the
+# system binding pre-installed. The kernel gracefully degrades to simulation
+# when SoapySDR is absent, so CI runs the full test suite on numpy + pytest
+# alone. Contributors who want SDR tests install SoapySDR separately (see
+# docs/INSTALL.md).
+dev = [
+    "pytest>=7.0",
+    "matplotlib>=3.5",
+]
+
+[project.urls]
+Documentation = "https://github.com/rf-compute/rf-compute/blob/main/docs/field-map.md"
+FieldMap = "https://github.com/rf-compute/rf-compute/blob/main/docs/field-map.md"
+Bibliography = "https://github.com/rf-compute/rf-compute/blob/main/docs/bibliography.md"
+Contributing = "https://github.com/rf-compute/rf-compute/blob/main/CONTRIBUTING.md"
+
+[tool.setuptools]
+# We use a flat package layout: the package is `rf_compute/` at the repo root.
+# This keeps `from rf_compute import ...` working in both installed and
+# development (pip install -e .) modes without a `src/` prefix.
+packages = ["rf_compute"]
+
+[tool.pytest.ini_options]
+# Tests (when added) live in tests/. Run with: pytest
+testpaths = ["tests"]
+python_files = ["test_*.py"]
