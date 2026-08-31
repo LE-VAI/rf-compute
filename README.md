@@ -41,7 +41,7 @@ They all share one thing: **the waveform is the operand.** Nobody has built the 
 
 ## The $350 hello world
 
-You don't need a fab, a clean room, or a metamaterial. You need **two transmit SDRs, one receive SDR, and a laptop.** But you can also start for free — the simulation kernel runs on NumPy alone.
+You don't need a fab, a clean room, or a metamaterial. You need **two transmit SDRs, one receive SDR, and a laptop** — clone-tier hardware gets you there around $350; official units run ~$725. Either way, the simulation kernel runs free on NumPy alone.
 
 ```
 Tx1 ──┐
@@ -55,7 +55,7 @@ This is the simplest wave-compute primitive that exists. If you can run this, yo
 
 📖 **Full walkthrough:** [`docs/hello-world-aircomp.md`](docs/hello-world-aircomp.md) — hardware, code, what to expect, troubleshooting
 
-**Budget option (~$190):** One HackRF + one RTL-SDR. You transmit x1, x2, and x1+x2 sequentially and compare captures in post-processing. You lose the simultaneity that makes AirComp profound, but you learn the signal-processing structure for half the cost. Details in the walkthrough.
+**Budget option:** One HackRF + one RTL-SDR (clone-tier ~$190, official ~$380). You transmit x1, x2, and x1+x2 sequentially and compare captures in post-processing. You lose the simultaneity that makes AirComp profound, but you learn the signal-processing structure for half the cost. Details in the walkthrough.
 
 ### Quick start (60 seconds, no hardware)
 
@@ -76,13 +76,13 @@ The simulation kernel runs the same API as the hardware kernel — switch `backe
 
 Three reproducible experiments, escalating in cost. Each maps to a peer-reviewed result.
 
-| Tier | Experiment | Cost | Proves | Citation |
+| Tier | Experiment | Cost (clone-tier / official) | Proves | Citation |
 |---|---|---|---|---|
-| **1** | AirComp sum | ~$350 | Interference IS computation | Nazer & Gastpar, *IEEE TIT* (2011) |
-| **2** | Wave-domain convolution | ~$200 | Linear operators are native to wave physics | Silva et al., *Science* (2014) |
+| **1** | AirComp sum | ~$350 / ~$725 | Interference IS computation | Nazer & Gastpar, *IEEE TIT* (2011) |
+| **2** | Wave-domain convolution | ~$200 / ~$395 | Linear operators are native to wave physics | Silva et al., *Science* (2014) |
 | **3** | Matrix inversion via feedback | free / ~$200 / ~$350 | The wave domain solves equations; settling, not iterating | *Nature Communications* (2025) |
 
-Tier 3 has three modes (simulation free, software-in-the-loop ~$200, analog feedback ~$350) — see the walkthrough for the trade-off.
+Tier 3 has three modes (simulation free, software-in-the-loop ~$200 clone / ~$395 official, analog feedback ~$350 clone / ~$480 official) — see the walkthrough for the trade-off.
 
 📖 **Full ladder walkthroughs:** [Tier 1](docs/hello-world-aircomp.md) · [Tier 2](docs/hello-world-convolution.md) · [Tier 3](docs/hello-world-matrix-inversion.md) — each with parts lists, code, and troubleshooting
 
@@ -122,18 +122,20 @@ If you read one document, read the field map.
 
 ## Hardware you'll need
 
-| Item | Tier 1 | Tier 2 | Tier 3 (Mode B/C) | Est. cost |
-|---|:---:|:---:|:---:|---|
-| HackRF One SDR (Tx) | ×2 | ×1 | ×1 | ~$150 each |
-| RTL-SDR (Rx, receive-only) | ×1 | ×1 | ×1 | ~$30 |
-| 10 MHz clock sync cable (BNC) | ✓ | | | ~$5 |
-| Laptop (any OS) | ✓ | ✓ | ✓ | you have one |
-| Passive scatterer / reflector | | ✓ (Mode B) | | ~$10–20 |
-| RF circulator (one-way loop) | | | ✓ (Mode C) | ~$40 |
-| Programmable attenuator (loop gain) | | | ✓ (Mode C) | ~$30 |
-| RF splitter/combiner | | | ✓ (Mode C) | ~$15 |
+Prices verified 2026-08-31. HackRF One official retail is ~$340 (SparkFun/Adafruit have retired the unit; GSG's successor **HackRF Pro** is ~$400). AliExpress clones run ~$100–150 but degrade above 1 GHz per Great Scott Gadgets' own clone test — fine for sub-GHz learning experiments, not for precision work. RTL-SDR Blog V4 is end-of-line (May 2026); current official units are the V3 or V4L at ~$35–40.
 
-**Total entry cost: free (Tier 3 sim) / ~$200 (Tier 2 or Tier 3 Mode B) / ~$350 (Tier 1 or Tier 3 Mode C).** No fab. No clean room. No metamaterial. Tier 3 Mode A is pure simulation and costs nothing — start there to see the math before buying hardware.
+| Item | Tier 1 | Tier 2 | Tier 3 (Mode B/C) | Official | Clone-tier |
+|---|:---:|:---:|:---:|---|---|
+| HackRF One SDR (Tx) | ×2 | ×1 | ×1 | ~$340 each | ~$100–150 each |
+| RTL-SDR (Rx, receive-only) | ×1 | ×1 | ×1 | ~$35–40 | ~$30 |
+| 10 MHz clock sync cable (BNC/SMA) | ✓ | | | ~$5 | — |
+| Laptop (any OS) | ✓ | ✓ | ✓ | you have one | — |
+| Passive scatterer / reflector | | ✓ (Mode B) | | ~$10–20 | DIY |
+| RF circulator (one-way loop) | | | ✓ (Mode C) | ~$40 | — |
+| Programmable attenuator (loop gain) | | | ✓ (Mode C) | ~$30 | — |
+| RF splitter/combiner | | | ✓ (Mode C) | ~$15–25 | — |
+
+**Total entry cost: free (Tier 3 sim) / clone-tier ~$200–350 / official ~$390–725 depending on tier.** No fab. No clean room. No metamaterial. Tier 3 Mode A is pure simulation and costs nothing — start there to see the math before buying hardware. If you buy clones, know what you're buying: they work for learning, they drift for precision.
 
 ---
 
@@ -158,7 +160,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 | Zangeneh-Nejad et al., "Analogue computing with metamaterials," *Nature Reviews Materials* | 2021 | The canonical review. "Wave-based analog computing." |
 | Li et al., "Performing calculus with ENZ metamaterials," *Science Advances* | 2022 | Differentiation + integration in the material. |
 | "Programmable wave-based analog computing metastructure," *Nature Communications* | 2025 | **The SOTA.** Matrix inversion, Newton's method, Lagrangian optimization at 45 MHz. |
-| Guan & Yao, "Microwave photonic neural network," *J. Lightwave Technology* | 2025 | RF photonic MVM. 55×10⁶ MAC/s. |
+| Chegini, Guan & Yao, "Microwave photonic neural network," *J. Lightwave Technology* | 2025 | RF photonic MVM. 55×10⁶ MAC/s. |
 
 📖 **Annotated bibliography:** [`docs/bibliography.md`](docs/bibliography.md) — every citation, reading order, how to use it
 

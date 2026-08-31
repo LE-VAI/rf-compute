@@ -41,22 +41,22 @@ No SDR. No RF. This mode teaches the math.
 
 | Item | Role | Qty | Est. cost |
 |---|---|:---:|---|
-| HackRF One | Transmitter (Tx) | 1 | ~$150 |
-| RTL-SDR | Receiver (Rx) | 1 | ~$30 |
+| HackRF One | Transmitter (Tx) | 1 | ~$340 official / ~$100–150 clone |
+| RTL-SDR | Receiver (Rx) | 1 | ~$35–40 official (V3/V4L) / ~$30 clone |
 | SMA cable + antenna | RF connection | 2 sets | ~$10 |
 | Laptop | Host + feedback loop | 1 | you have one |
-| **Total** | | | **~$190** |
+| **Total** | | | **~$190 clone-tier / ~$380 official** |
 
 The loop closure is digital: Tx sends `x_k`, Rx captures `y_k = A·x_k` (the channel convolves with the operator), the laptop computes the feedback `x_{k+1} = x_k + α(b − y_k)` and re-transmits. Each iteration is a real RF round-trip; the *feedback path* is software, not wire.
 
-### Mode C — Analog feedback (~$350)
+### Mode C — Analog feedback (~$350 clone-tier / ~$480 official)
 
 Mode B hardware, plus:
 
 | Item | Role | Est. cost |
 |---|---|---|
 | RF circulator (915 MHz or 2.4 GHz) | One-way loop (Tx → channel → Rx → loop back to Tx) | ~$40 |
-| Programmable attenuator (or fixed + switched) | Sets the loop gain `α` | ~$30 |
+| Programmable attenuator (or fixed + switched) | Sets the loop gain `α` | ~$30 (hobby tier) |
 | RF splitter/combiner | Sums the feedback with the input `b` | ~$15 |
 | Extra SMA cables | Loop wiring | ~$10 |
 | **Mode C add-on total** | | **~$95** |

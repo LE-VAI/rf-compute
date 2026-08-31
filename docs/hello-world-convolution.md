@@ -26,11 +26,11 @@ Two modes are provided:
 
 | Item | Role | Qty | Est. cost |
 |---|---|:---:|---|
-| HackRF One | Transmitter (Tx) | 1 | ~$150 |
-| RTL-SDR | Receiver (Rx) | 1 | ~$30 |
+| HackRF One | Transmitter (Tx) | 1 | ~$340 official / ~$100–150 clone |
+| RTL-SDR | Receiver (Rx) | 1 | ~$35–40 official (V3/V4L) / ~$30 clone |
 | SMA cable + 2.4 GHz whip antenna | RF connection | 2 sets | ~$10 |
 | Laptop (any OS) | Host | 1 | you have one |
-| **Total** | | | **~$190** |
+| **Total** | | | **~$190 clone-tier / ~$380 official** |
 
 **Why only 2 RF chains now:** Unlike Tier 1 (which needed two simultaneous transmitters + a receiver = 3 chains), Tier 2 is point-to-point: one Tx, one Rx. HackRF One's half-duplex limitation doesn't bite here.
 

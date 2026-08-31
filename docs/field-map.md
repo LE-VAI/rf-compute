@@ -2,9 +2,9 @@
 
 ## A research-and-education surface for wave-domain computation
 
-**Date:** 2026-07-31
-**Status:** Spine draft — determines whether the public GitHub preview has real structure or is vibes
-**Provenance:** Synthesized from AnySearch research conducted 2026-07-31. All citations are peer-reviewed unless marked `[preprint]` or `[vendor]`.
+**Date:** 2026-07-31 · currency sweep 2026-08-31
+**Status:** Spine draft — determines whether the public GitHub preview has real structure or is vibes. All anchors and deferral boundaries re-verified 2026-08-31; no SOTA displacement in any lineage.
+**Provenance:** Synthesized from multi-source academic search via live web search (AnySearch), conducted 2026-07-31; currency sweep 2026-08-31 via the same method. All citations are peer-reviewed unless marked `[preprint]` or `[vendor]`.
 
 ---
 
@@ -18,6 +18,8 @@
 4. Spin-torque neuromorphic RF (condensed matter)
 
 The unifying claim across all four: **the waveform is the operand.** Interference isn't noise to cancel — it's the multiply-accumulate operation. The medium is the math.
+
+**The field now agrees.** "Programmable Wave-Domain Computing" (del Hougne, Di Renzo, Alù, Cui, Eldar, Engheta, Hu & Ozcan — HAL:05487878, posted Feb 2026, under review as of 2026-08-31) is a multi-institution perspective unifying metasurface computing, wireless networks, and computation under one programmable-wave umbrella. Three of the names this map is built on are authors. The unifying framing this surface was first to organize for builders is now being claimed by the field's own leading figures.
 
 The opportunity is the gap: there is no unified developer surface. The four lineages publish in *Nature*, *Science*, *IEEE Trans. Inf. Theory* — and nowhere a builder can land. Whoever builds the bridge — the SDK, the simulator, the "hello world" — defines the frame for the field.
 
@@ -38,6 +40,8 @@ The opportunity is the gap: there is no unified developer surface. The four line
 | Equation solver | Mohammadi Estakhri, Edwards & Engheta, "Inverse-designed metastructures that solve equations," *Science* 363, 1333–1338 (2019). Penn. |
 
 **Key labs:** Engheta (Penn) — central figure; Alù (CUNY/ASRC); Fleury (EPFL); Yue Li (Tsinghua).
+
+**Currency note (verified 2026-08-31):** The 2025 anchor remains SOTA — nothing published through August 2026 beats its matrix size, moves to GHz operation, or demonstrates a new operator class at larger scale. Two in-window developments worth tracking: "Recurrent wave computing in space-time metamaterials" (Castaldi, Coppolaro, Moccia, Rizza, Engheta & Galdi, submitted July 18 2026, under review) extends the operator family to time-varying media that compute recurrently; the Fleury lab (EPFL) has a "computational space with model-free metasurface neural network" under review, confirming that lineage's entry into metasurfaces-as-computers. A low-cost fabrication datapoint: arXiv:2603.24604 builds a 4×4 DFT in microstrip with commodity hybrid couplers and phase shifters — PCB-tier wave compute is real.
 
 **SOTA device (the anchor paper):** 45 MHz programmable metastructure with voltage-controlled phase shifters + amplifiers as "multiplier modules." Open-loop = matrix-vector multiply (~0.001 relative error). Closed-loop with feedback = matrix inversion / equation solving (~0.005 error). Demonstrates matrix inversion (stationary), Newton's method root-finding, and Lagrangian constrained optimization (non-stationary). Authors note the module could be implemented at RF (GHz) and photonic (THz) platforms, same principle.
 
@@ -84,7 +88,9 @@ aircomp_kernel(signals, function="sum"):
     # no per-device demodulation — interference is the operation
 ```
 
-**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items.
+**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; next checkpoint is the September 2026 RAN plenary).
+
+**Currency note (verified 2026-08-31):** The deferral boundary above holds verbatim. In-window literature is dense and converging on this project's thesis: arXiv:2608.13353 (Aug 13 2026) uses microwave linear analog computers to aid AirComp beamforming — the first direct computational-metamaterials × AirComp crossover, the two lineages this map holds apart fusing in the literature. arXiv:2607.16360 (EML-AirComp) extends AirComp beyond sum/mean toward general nomographic function trees via a single reusable exp-minus-log gate. arXiv:2607.22509 (MiLAC, Nerini & Clerckx, July 24 2026) formally names RF-domain linear algebra as a communications subfield — matrix inversion at quadratic rather than cubic complexity scaling.
 
 ---
 
@@ -95,7 +101,7 @@ aircomp_kernel(signals, function="sum"):
 | Role | Citation |
 |---|---|
 | Foundational review | Marpaung, Yao & Capmany, "Integrated microwave photonics," *Nature Photonics* 13, 80–90 (2019) |
-| SOTA (NN) | Guan & Yao, "A Microwave Photonic Neural Network in the Frequency Synthetic Dimension," *J. Lightwave Technol.* 43, 9934–9940 (2025). 55×10⁶ MAC/s, 95.93% prediction accuracy (reported). |
+| SOTA (NN) | Chegini, Guan & Yao, "A Microwave Photonic Neural Network in the Frequency Synthetic Dimension," *J. Lightwave Technol.* 43(21), 9874 (2025). 55×10⁶ MAC/s, 95.93% prediction accuracy (reported). DOI: 10.1109/JLT.2025.3579197 |
 | SOTA (tensor core) | "Photonic tensor core in thin-film lithium niobate," *Nature Communications* (2024). 120 GOPS, 60 GHz weight-update speed. In-situ training demonstrated. |
 
 **Key name:** Jianping Yao (Ottawa) — the through-line; co-author of the 2019 review and the 2025 NN paper.
@@ -114,6 +120,8 @@ microwave_photonic_kernel(matrix, vector):
 ```
 
 **Open problem (deferred to community):** On-chip integration. Optical loss. In-situ training at scale. Commercial fabrication (Lightmatter is pursuing this; not our lane).
+
+**Commercial note (verified 2026-08-31):** Lightmatter remains $4.4B (no round since the Oct 2024 Series D), with 2026 momentum: NVIDIA NVLink Fusion partnership (June 2026), OCP CPO System Architecture Initiative launch (Aug 2026), 1.6 Tbps/fiber record (Mar 2026). **Lightelligence completed its Hong Kong IPO April 28, 2026, raising $319M** (filed Mar 31; pre-IPO valuation $1.1B; debut surged 400%+) — a wave-domain compute company is now publicly traded, though still optical (Hummingbird SiP, Moonstone comb-laser Photowave), not pure-RF. Salience Labs is a $30M-Series-A silicon-photonics *switch* company, not photonic compute. No pure-RF compute vendor exists as of this date.
 
 ---
 
@@ -169,7 +177,7 @@ Three reproducible experiments, escalating in cost and complexity. Each maps to 
 
 | Field | Value |
 |---|---|
-| **Cost** | ~$350 (2× HackRF One SDRs + 1× RTL-SDR + 10 MHz clock cable + laptop). Budget option ~$190 (1 HackRF + 1 RTL-SDR, sequential — see walkthrough). |
+| **Cost** | ~$350 clone-tier / ~$725 official (2× HackRF One SDRs + 1× RTL-SDR + 10 MHz clock cable + laptop). Budget option ~$190 clone / ~$380 official (1 HackRF + 1 RTL-SDR, sequential — see walkthrough). |
 | **What it proves** | Two transmitters send pre-coded signals; the receiver reads their sum from the superposed waveform — without decoding either individual signal. |
 | **The lesson** | Interference IS computation. The channel is the adder. |
 | **Citation** | Nazer & Gastpar, *IEEE Trans. Inf. Theory* (2011) |
@@ -180,7 +188,7 @@ Three reproducible experiments, escalating in cost and complexity. Each maps to 
 
 | Field | Value |
 |---|---|
-| **Cost** | ~$200 (1× HackRF One Tx + 1× RTL-SDR Rx + laptop). Mode B (passive scatterer) adds ~$10–25. |
+| **Cost** | ~$200 clone-tier / ~$395 official (1× HackRF One Tx + 1× RTL-SDR Rx + laptop). Mode B (passive scatterer) adds ~$10–25. |
 | **What it proves** | An RF waveform passed through a programmable filter chain performs convolution in the wave domain. The filter's impulse response = the operator. |
 | **The lesson** | Linear operators are native to wave physics. Convolution is not a digital algorithm here — it's what the medium *does*. |
 | **Citation** | Silva et al., *Science* (2014); Zangeneh-Nejad review, *Nature Reviews Materials* (2021) |
@@ -191,7 +199,7 @@ Three reproducible experiments, escalating in cost and complexity. Each maps to 
 
 | Field | Value |
 |---|---|
-| **Cost** | Free (Mode A: simulation) / ~$200 (Mode B: software-in-the-loop, 1 HackRF + 1 RTL-SDR) / ~$350 (Mode C: analog feedback loop, adds circulator + attenuator + splitter). |
+| **Cost** | Free (Mode A: simulation) / ~$200 clone, ~$395 official (Mode B: software-in-the-loop, 1 HackRF + 1 RTL-SDR) / ~$350 clone, ~$480 official (Mode C: analog feedback loop, adds circulator + attenuator + splitter). |
 | **What it proves** | Closed-loop RF feedback solves matrix inversion / linear equations in the wave domain. Open-loop does the multiply; the feedback loop does the inversion. The wave domain *settles* to the solution. |
 | **The lesson** | Iterative algorithms (stationary fixed-point / Richardson-Jacobi-type, Newton's method, Lagrangian optimization) have wave-domain implementations. Computation is not bound to clock cycles — it's bound to settling time. |
 | **Citation** | *Nature Communications* (2025), arXiv:2301.02850 |

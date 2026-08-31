@@ -120,9 +120,9 @@ Citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Where a pa
 
 ---
 
-### Guan & Yao 2025 — *J. Lightwave Technology* — The SOTA RF-photonic NN
+### Chegini, Guan & Yao 2025 — *J. Lightwave Technology* — The SOTA RF-photonic NN
 
-**Citation:** Guan, Y. & Yao, J. "A Microwave Photonic Neural Network in the Frequency Synthetic Dimension Using Multi-tone Single-Sideband Modulation in a Fiber Loop." *J. Lightwave Technol.* 43, 9934–9940 (2025). [DOI: 10.1109/JLT.2025.3579197](https://doi.org/10.1109/JLT.2025.3579197)
+**Citation:** Chegini, M., Guan, Y. & Yao, J. "A Microwave Photonic Neural Network in the Frequency Synthetic Dimension Using Multi-tone Single-Sideband Modulation in a Fiber Loop." *J. Lightwave Technol.* 43(21), 9874 (2025). [DOI: 10.1109/JLT.2025.3579197](https://doi.org/10.1109/JLT.2025.3579197)
 
 **What it claims:** A microwave photonic neural network using a dual-parallel Mach-Zehnder modulator (DP-MZM) in an optical fiber loop. Multi-tone RF signals applied to the modulator generate sidebands; the coupling between optical carriers and modulated sidebands *is* the matrix-vector multiplication. Achieves 55×10⁶ MAC/s and 95.93% prediction accuracy on a 3-2-8 feedforward NN.
 
@@ -207,7 +207,7 @@ If you're new to the field and want to read your way in, here's a cross-lineage 
 ### Phase 3 — The frontier (2 hours)
 
 7. **Nature Communications 2025** (arXiv:2301.02850) — the SOTA: a programmable RF metastructure solving equations
-8. **Guan & Yao 2025** (JLT) — the SOTA of microwave photonic NN
+8. **Chegini, Guan & Yao 2025** (JLT) — the SOTA of microwave photonic NN
 
 ### Phase 4 — The context (1 hour)
 

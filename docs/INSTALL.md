@@ -68,6 +68,8 @@ This installs the `SoapySDR` Python binding. But **the SDR drivers themselves ar
 
 #### RTL-SDR drivers
 
+> **Buying note (2026-08):** The RTL-SDR Blog **V4 is end-of-line** (May 2026 — its Rafael R828D tuner chip is discontinued). Current official units are the **V3** (~$35–40) and the **V4L "lite"** (~$38, R828S chip — requires the latest drivers; some niche software hasn't caught up). Generic RTL2832U clones (~$30) still work with the R820T driver family. Any of them is fine as this project's receive-only Rx.
+
 1. Download `rtl-sdr-win32-x64.zip` from [the osmocom RTL-SDR page](https://osmocom.org/projects/rtl-sdr).
 2. Extract to a permanent location (e.g., `C:\rtl-sdr\`).
 3. Add that directory to your `PATH`:
@@ -78,7 +80,7 @@ This installs the `SoapySDR` Python binding. But **the SDR drivers themselves ar
 
 #### SoapySDR + vendor plugins
 
-The easiest path on Windows is [PothosSDR](https://github.com/pothosware/pothos/wiki/PothosSDR-Install-Recipes), which bundles SoapySDR + HackRF + RTL-SDR support in one installer:
+The easiest path on Windows is [PothosSDR](https://github.com/pothosware/pothos/wiki/PothosSDR-Install-Recipes), which bundles SoapySDR + HackRF + RTL-SDR support in one installer. One caveat: the latest prebuilt installer is dated 2021 — it still works and still bundles everything you need, but don't expect frequent updates:
 
 1. Download the latest PothosSDR installer from [the Pothos downloads page](https://downloads.myriadrf.org/project/PothosSDR/).
 2. Run the installer. It installs SoapySDR, SoapyHackRF, SoapyRTLSDR, and the underlying drivers.
@@ -171,8 +173,8 @@ This installs pytest, SoapySDR, and matplotlib together. Run the test suite with
 
 Once you can run the examples, work through the walkthroughs in order:
 
-1. [`docs/hello-world-aircomp.md`](hello-world-aircomp.md) — Tier 1, AirComp sum (needs 2× HackRF + 1× RTL-SDR, ~$350)
-2. [`docs/hello-world-convolution.md`](hello-world-convolution.md) — Tier 2, wave-domain convolution (needs 1× HackRF + 1× RTL-SDR, ~$200)
+1. [`docs/hello-world-aircomp.md`](hello-world-aircomp.md) — Tier 1, AirComp sum (needs 2× HackRF + 1× RTL-SDR, ~$350 clone / ~$725 official)
+2. [`docs/hello-world-convolution.md`](hello-world-convolution.md) — Tier 2, wave-domain convolution (needs 1× HackRF + 1× RTL-SDR, ~$200 clone / ~$395 official)
 3. [`docs/hello-world-matrix-inversion.md`](hello-world-matrix-inversion.md) — Tier 3, matrix inversion (3 modes: free / $200 / $350)
 
 Each walkthrough is self-contained: hardware list, parts costs, code, expected output, troubleshooting, safety.

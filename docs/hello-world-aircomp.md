@@ -24,13 +24,13 @@ If you want the lattice-coded version, see the "Going deeper" section at the end
 
 | Item | Role | Qty | Est. cost |
 |---|---|:---:|---|
-| HackRF One | Transmitter 1 (Tx1) | 1 | ~$150 |
-| HackRF One | Transmitter 2 (Tx2) | 1 | ~$150 |
-| RTL-SDR (or second HackRF) | Receiver (Rx) | 1 | ~$30 |
+| HackRF One | Transmitter 1 (Tx1) | 1 | ~$340 official / ~$100–150 clone |
+| HackRF One | Transmitter 2 (Tx2) | 1 | ~$340 official / ~$100–150 clone |
+| RTL-SDR (or second HackRF) | Receiver (Rx) | 1 | ~$35–40 official (V3/V4L) / ~$30 clone |
 | 10 MHz clock cable (BNC) | Frequency sync Tx1↔Tx2 | 1 | ~$5 |
 | SMA cables + antennas (2.4 GHz whip) | RF connection | 3 sets | ~$15 |
 | Laptop (any OS) | Host | 1 | you have one |
-| **Total** | | | **~$350** |
+| **Total** | | | **~$350 clone-tier / ~$725 official** |
 
 **Why 3 RF chains:** HackRF One is half-duplex — it can either transmit *or* receive at a given time, not both. For true simultaneous AirComp (2 Tx + 1 Rx), you need three units. The RTL-SDR is receive-only and cheap, making it ideal for the Rx role.
 
@@ -38,11 +38,11 @@ If you want the lattice-coded version, see the "Going deeper" section at the end
 
 | Item | Role | Qty | Est. cost |
 |---|---|:---:|---|
-| HackRF One | Transmitter (switchable Tx1/Tx2) | 1 | ~$150 |
-| RTL-SDR | Receiver | 1 | ~$30 |
+| HackRF One | Transmitter (switchable Tx1/Tx2) | 1 | ~$340 official / ~$100–150 clone |
+| RTL-SDR | Receiver | 1 | ~$35–40 official / ~$30 clone |
 | SMA cable + antenna | RF connection | 2 sets | ~$10 |
 
-**Trade-off:** You transmit x1, capture it. Then transmit x2, capture it. Then transmit x1+x2 (pre-computed), capture it. The "channel computation" is done in post-processing by comparing the three captures. You lose the simultaneity that makes AirComp profound, but you learn the signal-processing structure for ~$190. Good for a first pass; upgrade to the authentic setup when you're ready.
+**Trade-off:** You transmit x1, capture it. Then transmit x2, capture it. Then transmit x1+x2 (pre-computed), capture it. The "channel computation" is done in post-processing by comparing the three captures. You lose the simultaneity that makes AirComp profound, but you learn the signal-processing structure for ~$190 clone-tier (~$380 official). Good for a first pass; upgrade to the authentic setup when you're ready.
 
 ---
 
