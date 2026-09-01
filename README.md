@@ -64,6 +64,7 @@ git clone https://github.com/rf-compute/rf-compute.git
 cd rf-compute
 pip install -e .
 python examples/tier1_aircomp_kernel.py    # AirComp: 3+5=8
+python examples/tier1_5_lattice_aircomp_kernel.py  # exact lattice sums, $0
 python examples/tier2_convolution_kernel.py # 4 operators
 python examples/tier3_inversion_kernel.py   # solves Ax=b
 ```
@@ -79,12 +80,13 @@ Three reproducible experiments, escalating in cost. Each maps to a peer-reviewed
 | Tier | Experiment | Cost (clone-tier / official) | Proves | Citation |
 |---|---|---|---|---|
 | **1** | AirComp sum | ~$350 / ~$725 | Interference IS computation | Nazer & Gastpar, *IEEE TIT* (2011) |
+| **1.5** | Lattice-coded AirComp | free (sim) | The exact result: noise-resilient sums in one channel use, no message decoded | Nazer & Gastpar, *IEEE TIT* (2007/2011) |
 | **2** | Wave-domain convolution | ~$200 / ~$395 | Linear operators are native to wave physics | Silva et al., *Science* (2014) |
 | **3** | Matrix inversion via feedback | free / ~$200 / ~$350 | The wave domain solves equations; settling, not iterating | *Nature Communications* (2025) |
 
 Tier 3 has three modes (simulation free, software-in-the-loop ~$200 clone / ~$395 official, analog feedback ~$350 clone / ~$480 official) — see the walkthrough for the trade-off.
 
-📖 **Full ladder walkthroughs:** [Tier 1](docs/hello-world-aircomp.md) · [Tier 2](docs/hello-world-convolution.md) · [Tier 3](docs/hello-world-matrix-inversion.md) — each with parts lists, code, and troubleshooting
+📖 **Full ladder walkthroughs:** [Tier 1](docs/hello-world-aircomp.md) · [Tier 1.5](docs/hello-world-lattice-aircomp.md) · [Tier 2](docs/hello-world-convolution.md) · [Tier 3](docs/hello-world-matrix-inversion.md) — each with parts lists, code, and troubleshooting
 
 ---
 
@@ -172,6 +174,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 
 - ✅ [Field map](docs/field-map.md) — the spine document
 - ✅ [Tier 1: AirComp sum](docs/hello-world-aircomp.md) — the $350 hello world
+- ✅ [Tier 1.5: Lattice-coded AirComp](docs/hello-world-lattice-aircomp.md) — the $0 exact-computation primitive (nested-lattice kernel, 31 tests)
 - ✅ [Tier 2: Wave-domain convolution](docs/hello-world-convolution.md) — the $200 linear-operator primitive
 - ✅ [Tier 3: Matrix inversion via feedback](docs/hello-world-matrix-inversion.md) — the capstone (free / $200 / $350)
 - ✅ [Annotated bibliography](docs/bibliography.md) — every citation, reading order, how to use it
@@ -180,6 +183,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 - ✅ [LICENSE](LICENSE) — MIT
 - ✅ [SDR kernel abstraction](rf_compute/) — one API across all four lineages
   - ✅ [`examples/tier1_aircomp_kernel.py`](examples/tier1_aircomp_kernel.py) — Tier 1 with the kernel
+  - ✅ [`examples/tier1_5_lattice_aircomp_kernel.py`](examples/tier1_5_lattice_aircomp_kernel.py) — Tier 1.5 with the kernel
   - ✅ [`examples/tier2_convolution_kernel.py`](examples/tier2_convolution_kernel.py) — Tier 2 with the kernel
   - ✅ [`examples/tier3_inversion_kernel.py`](examples/tier3_inversion_kernel.py) — Tier 3 with the kernel
 - ⏳ Community contributions (see `CONTRIBUTING.md`)

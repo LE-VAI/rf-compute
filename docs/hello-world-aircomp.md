@@ -303,7 +303,7 @@ The experiment above uses analog amplitude superposition. The actual Nazer & Gas
 
 - Instead of sending `x1/h1` as a continuous amplitude, you send a lattice codeword whose structure guarantees the receiver recovers the finite-field sum.
 - This requires nested lattice codes — the construction is in the paper's Section IV.
-- A software implementation of compute-and-forward lattice coding is a substantial project in itself. It's a natural "Tier 1.5" extension if this surface grows.
+- **This is now implemented:** see [hello-world-lattice-aircomp.md](hello-world-lattice-aircomp.md) — the Tier 1.5 walkthrough. The nested-lattice kernel (`rf_compute/lattice.py`) runs free on NumPy: exact integer sums mod L from one noisy channel use, with the compute-and-forward coefficient equation and the three-scheme scoreline.
 
 ### Toward Tier 2 (wave-domain convolution)
 

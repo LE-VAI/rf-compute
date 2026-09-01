@@ -63,7 +63,7 @@ class Operator:
 @dataclass
 class AirCompOperator(Operator):
     """
-    Lineage 2 — Over-the-Air Computation.
+    Lineage 2 — Over-the-Air Computation (analog superposition).
 
     The wireless channel computes a function (sum, by default) of N
     distributed inputs. The channel is the adder; interference is the
@@ -71,10 +71,12 @@ class AirCompOperator(Operator):
 
     Maps to: Nazer & Gastpar, IEEE Trans. Inf. Theory (2011).
     Walkthrough: docs/hello-world-aircomp.md
+
+    For the noise-resilient exact version, use LatticeAirCompOperator
+    (Tier 1.5) — same lineage, nested-lattice codes.
     """
     num_nodes: int = 2
-    function: str = "sum"   # "sum" is the only function the analog-superposition
-                            # version supports; lattice-coded extension is Tier 1.5
+    function: str = "sum"   # the analog-superposition kernel supports 'sum' only
     lineage: str = "aircomp"
 
     def __post_init__(self):
@@ -82,9 +84,53 @@ class AirCompOperator(Operator):
             raise NotImplementedError(
                 f"AirComp function '{self.function}' not supported. "
                 "The analog-superposition kernel supports 'sum' only. "
-                "Lattice-coded finite-field functions (Nazer & Gastpar 2011) "
-                "are a Tier 1.5 contribution target — see CONTRIBUTING.md."
+                "For exact finite-field functions use LatticeAirCompOperator "
+                "(nested-lattice coding, Tier 1.5)."
             )
+
+
+@dataclass
+class LatticeAirCompOperator(Operator):
+    """
+    Lineage 2 — Over-the-Air Computation, nested-lattice coded (Tier 1.5).
+
+    The full Nazer/Gastpar result: with nested lattice codes, the channel
+    superposition computes an EXACT function of the messages (the integer
+    sum mod L) at finite SNR — error probability decaying exponentially in
+    the lattice dimension — while the receiver decodes NO individual
+    message. One channel use for N nodes, at the single-user rate.
+
+    Maps to: Nazer & Gastpar, IEEE Trans. Inf. Theory 53(10) 3498 (2007,
+    founding) and 57(10) 6463 (2011, compute-and-forward,
+    DOI 10.1109/TIT.2011.2165816).
+    Walkthrough: docs/hello-world-lattice-aircomp.md
+
+    The lattice machinery lives in rf_compute.lattice; this operator binds
+    it to the kernel's unified interface.
+
+    coefficients are the compute-and-forward equation: with coefficients
+    [a_1..a_N] the decoded value is sum(a_i * w_i) mod L. Integer
+    coefficients are realized as channel gains (node i's signal arrives at
+    gain a_i — the theory's "channel as the operator" made physical) and
+    the receiver replays dithers at those weights.
+    """
+    num_nodes: int = 2
+    modulus: int = 16          # L: the message alphabet Z_L and the coarse cell
+    dimension: int = 32        # n: lattice coordinates (error ~ exp decay in n)
+    coefficients: Optional[Sequence] = None   # integer a_i; None = all-ones (plain sum)
+    lineage: str = "aircomp_lattice"
+
+    def __post_init__(self):
+        if self.modulus < 2:
+            raise ValueError("modulus must be >= 2")
+        if self.dimension < 1:
+            raise ValueError("dimension must be >= 1")
+        if self.coefficients is not None:
+            self.coefficients = [int(c) for c in self.coefficients]
+            if len(self.coefficients) != self.num_nodes:
+                raise ValueError(
+                    f"coefficients length {len(self.coefficients)} != num_nodes {self.num_nodes}"
+                )
 
 
 @dataclass
@@ -227,6 +273,8 @@ class WaveComputeKernel:
         """
         if isinstance(op, AirCompOperator):
             return self._apply_aircomp(op, inputs)
+        elif isinstance(op, LatticeAirCompOperator):
+            return self._apply_lattice_aircomp(op, inputs)
         elif isinstance(op, ConvolutionOperator):
             return self._apply_convolution(op, inputs)
         elif isinstance(op, ReservoirOperator):
@@ -281,6 +329,64 @@ class WaveComputeKernel:
             "docs/hello-world-aircomp.md for the full walkthrough. The kernel "
             "method is a stub; the walkthrough is the reference implementation."
         )
+
+    # ─── Lattice AirComp (Lineage 2, Tier 1.5) ────────────────────────────
+
+    def _apply_lattice_aircomp(self, op: LatticeAirCompOperator, inputs) -> dict:
+        """
+        Run one nested-lattice AirComp round.
+
+        inputs is a list of N integer messages in {0..L-1}. Returns a dict:
+          'value'         — the decoded sum a·w mod L (exact, whp)
+          'true_value'    — ground truth for verification
+          'exact'         — bool
+          'messages'      — what was transmitted (never decodable individually
+                            from the channel output alone)
+          'trial'         — the full lattice.run_trial record
+
+        The simulation backend is the reference; the SDR backend transmits the
+        same codewords over RF (the walkthrough covers sync and dither-seed
+        sharing). SDR lattice transmission degrades to simulation until the
+        walkthrough's calibration is implemented in-kernel.
+        """
+        return self._lattice_round_with_messages(op, inputs, np.random.default_rng())
+
+    def _lattice_round_with_messages(self, op: LatticeAirCompOperator,
+                                     ws, rng) -> dict:
+        """One lattice AirComp round with caller-supplied messages."""
+        from . import lattice as _lattice
+        ws = [int(w) for w in ws]
+        if len(ws) != op.num_nodes:
+            raise ValueError(f"expected {op.num_nodes} messages, got {len(ws)}")
+        L = op.modulus
+        for w in ws:
+            if not (0 <= w < L):
+                raise ValueError(f"message {w} out of range [0, {L})")
+        a = op.coefficients if op.coefficients is not None else [1] * op.num_nodes
+        true_val = int(np.sum(np.asarray(a) * ws) % L)
+        xs, ds = [], []
+        for w in ws:
+            x, d = _lattice.encode(w, L, op.dimension, rng)
+            xs.append(x)
+            ds.append(d)
+        # Noise-free in the sim backend's default: the lattice result is exact.
+        # Callers wanting the noisy channel use lattice.channel explicitly.
+        # Coefficients are realized as channel GAINS (the compute-and-forward
+        # equation made physical): node i's signal arrives at gain a_i, so the
+        # superposition is sum(a_i * x_i) and decode — which replays dithers at
+        # those same weights — recovers sum(a_i * w_i) mod L exactly.
+        y = np.zeros(op.dimension)
+        for ai, xi in zip(a, xs):
+            y = y + ai * xi
+        val = _lattice.decode(y, L, ds, a=a)
+        return {
+            'value': val,
+            'true_value': true_val,
+            'exact': val == true_val,
+            'messages': ws,
+            'modulus': L,
+            'coefficients': list(a),
+        }
 
     # ─── Convolution (Lineage 1) ─────────────────────────────────────────
 
@@ -393,7 +499,8 @@ def hilbert(N: int = 64) -> ConvolutionOperator:
 
 
 __all__ = [
-    'Operator', 'AirCompOperator', 'ConvolutionOperator', 'InversionOperator', 'ReservoirOperator',
+    'Operator', 'AirCompOperator', 'LatticeAirCompOperator',
+    'ConvolutionOperator', 'InversionOperator', 'ReservoirOperator',
     'WaveComputeKernel',
     'boxcar', 'differencer', 'matched', 'hilbert',
 ]

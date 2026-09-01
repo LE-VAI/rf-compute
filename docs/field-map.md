@@ -88,7 +88,11 @@ aircomp_kernel(signals, function="sum"):
     # no per-device demodulation — interference is the operation
 ```
 
-**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; next checkpoint is the September 2026 RAN plenary).
+**Implemented at two levels:**
+- **Tier 1 — analog superposition** (`docs/hello-world-aircomp.md`): the receiver reads a real-valued sum estimate. $0 in simulation; ~$350 clone-tier / ~$725 official over the air.
+- **Tier 1.5 — nested-lattice coded** (`docs/hello-world-lattice-aircomp.md`, `rf_compute/lattice.py`): the full Nazer/Gastpar construction at toy scale — exact integer sums mod L from one noisy channel use, compute-and-forward coefficients as channel gains, error decaying exponentially in the lattice dimension, individual messages structurally absent at the receiver. Free (NumPy only).
+
+**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; next checkpoint is the September 2026 RAN plenary). For the lattice tier specifically: fading-channel coefficient selection (lattice reduction), random-lattice ensembles beyond the repetition code, and the SDR sync/dither-seed-sharing deltas.
 
 **Currency note (verified 2026-08-31):** The deferral boundary above holds verbatim. In-window literature is dense and converging on this project's thesis: arXiv:2608.13353 (Aug 13 2026) uses microwave linear analog computers to aid AirComp beamforming — the first direct computational-metamaterials × AirComp crossover, the two lineages this map holds apart fusing in the literature. arXiv:2607.16360 (EML-AirComp) extends AirComp beyond sum/mean toward general nomographic function trees via a single reusable exp-minus-log gate. arXiv:2607.22509 (MiLAC, Nerini & Clerckx, July 24 2026) formally names RF-domain linear algebra as a communications subfield — matrix inversion at quadratic rather than cubic complexity scaling.
 
@@ -171,7 +175,7 @@ SDR is the bridge because it's the one platform where a builder can touch RF wav
 
 ## The "Hello World" Ladder
 
-Three reproducible experiments, escalating in cost and complexity. Each maps to a peer-reviewed result.
+Four reproducible experiments, escalating in cost and complexity. Each maps to a peer-reviewed result.
 
 ### Tier 1 — AirComp Sum (the Nazer/Gastpar 2007 result, made legible)
 
@@ -183,6 +187,17 @@ Three reproducible experiments, escalating in cost and complexity. Each maps to 
 | **Citation** | Nazer & Gastpar, *IEEE Trans. Inf. Theory* (2011) |
 | **Difficulty** | Beginner — the simplest wave-compute primitive |
 | **Walkthrough** | `docs/hello-world-aircomp.md` |
+
+### Tier 1.5 — Lattice-Coded AirComp (the full Nazer/Gastpar result, toy scale)
+
+| Field | Value |
+|---|---|
+| **Cost** | Free — pure simulation, NumPy only. (The SDR backend reuses the Tier 1 hardware for over-the-air runs; the deltas are sample sync + dither-seed sharing.) |
+| **What it proves** | With nested lattice codes, the same channel superposition computes an EXACT function of the messages (the integer sum mod L) at finite SNR — error decaying exponentially in the lattice dimension — while the receiver decodes no individual message. The compute-and-forward coefficient equation (Σ aᵢ·wᵢ mod L) comes free: integer coefficients ride the channel as gains. |
+| **The lesson** | The lattice doesn't change the channel; it changes what the noise is allowed to do. The sum is decodable at the rate of ONE user while all N transmit — routing pays N channel uses and an N-way error union to do worse. |
+| **Citation** | Nazer & Gastpar, *IEEE Trans. Inf. Theory* 53(10) 3498 (2007); 57(10) 6463 (2011), DOI 10.1109/TIT.2011.2165816; dithered coding per Erez & Zamir (2004) |
+| **Difficulty** | Beginner — one kernel call; the walkthrough makes the algebra legible |
+| **Walkthrough** | `docs/hello-world-lattice-aircomp.md` · module `rf_compute/lattice.py` · example `examples/tier1_5_lattice_aircomp_kernel.py` |
 
 ### Tier 2 — Wave-Domain Convolution / Filtering
 
