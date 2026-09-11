@@ -4,7 +4,7 @@
 
 **Date:** 2026-07-31
 **Status:** Spine draft — determines whether the public GitHub preview has real structure or is vibes
-**Provenance:** Synthesized from AnySearch research conducted 2026-07-31 via `AnySearch.search.anysearch`. All citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Memory nodes: `b4c5be3dc7ee`, `bc9448a3e16c`, `d598df71ca86`.
+**Provenance:** Synthesized from AnySearch research conducted 2026-07-31. All citations are peer-reviewed unless marked `[preprint]` or `[vendor]`.
 
 ---
 
@@ -243,8 +243,6 @@ Internal provenance is preserved in this document; the public surface carries it
 
 ## Provenance
 
-- **Research method:** AnySearch MCP (`AnySearch.search.anysearch`), 2026-07-31
-- **Rules followed:** `rule.AnySearch.anysearch_usage`, `rule.AnySearch.anysearch_routing_map`
-- **Memory nodes:** `b4c5be3dc7ee` (SOTA device), `bc9448a3e16c` (four lineages), `d598df71ca86` (commercial status)
+- **Research method:** AnySearch MCP, 2026-07-31
 - **Citation verification:** All citations checked as peer-reviewed unless marked `[preprint]` or `[vendor]`
 - **Honesty flags:** Lightmatter performance numbers are vendor-sourced. AirComp surveys are preprints. Spin-torque SDR mapping is approximate, not a hardware equivalent.

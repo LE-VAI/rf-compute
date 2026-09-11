@@ -231,7 +231,5 @@ Then run the hello-world ladder.
 
 ## Provenance
 
-- **Research method:** AnySearch MCP (`AnySearch.search.anysearch`), 2026-07-31
+- **Research method:** AnySearch MCP, 2026-07-31
 - **Verification:** All citations checked as peer-reviewed unless marked `[preprint]` or `[vendor]`. Lightmatter performance figures are vendor-sourced. AirComp surveys are preprints.
-- **Rules followed:** `rule.AnySearch.anysearch_usage`, `rule.AnySearch.anysearch_routing_map`
-- **Memory nodes:** `b4c5be3dc7ee`, `bc9448a3e16c`, `d598df71ca86`, `795c79ff6db3`, `54cc18d22066`, `095b517e56ae`, `2439b1082899`, `e90e6e6e7e5d`
