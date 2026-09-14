@@ -332,7 +332,7 @@ If you want to get closer to the actual Silva result — where a *passive object
 
 ### Toward Tier 3 (matrix inversion via feedback)
 
-Tier 2 proves the wave domain does linear operators. Tier 3 closes the loop: feed the output back to the input, and the feedback loop solves `Ax = b` for `x`. Open-loop (Tier 2) does the multiply `A·x`; closed-loop (Tier 3) does the inversion `A⁻¹·b`. That's the *Nature Communications* 2025 result. See `docs/hello-world-matrix-inversion.md` *(coming)*.
+Tier 2 proves the wave domain does linear operators. Tier 3 closes the loop: feed the output back to the input, and the feedback loop solves `Ax = b` for `x`. Open-loop (Tier 2) does the multiply `A·x`; closed-loop (Tier 3) does the inversion `A⁻¹·b`. That's the *Nature Communications* 2025 result. See `docs/hello-world-matrix-inversion.md`.
 
 ### Toward real metamaterials
 

@@ -57,13 +57,15 @@ The hello-world walkthroughs model this standard. Read them before contributing.
 
 These are the problems the field map explicitly defers to the community. They are hard. They are where the field's future is being built. If you have the physics, the hardware, or the theory for any of these, we want to host the bridge that makes your work legible to builders.
 
+**A named, verified gap:** a live literature and code scan (2026-09) found **no maintained open-source reference implementation of compute-and-forward coefficient selection** in any language. The algorithms are published; the code does not exist. `rf_compute/coefficients.py` is a toy-scale start. A proper implementation — complex channels, Gaussian-integer lattices, LLL + Schnorr–Euchner enumeration, and/or Sahraei & Gastpar's exact polynomial algorithm — would be the first of its kind. That is an unusually concrete contribution target.
+
 | Contribution target | What it is | Who owns it |
 |---|---|---|
 | **Scaling to NN-size matrices** | SOTA is 5×5. The path to 1024×1024 is a hardware physics problem — subwavelength resonator design, frequency-multiplexed parallel computation, or photonic-bandgap structures. | Metamaterials physics community (Engheta, Alù, Fleury, Yue Li lines) |
 | **Phone-form-factor integration** | 45 MHz ≈ 6.7m wavelength. Subwavelength resonator design at 5 GHz / phone scale is unsolved. ENZ (epsilon-near-zero) materials are a candidate path. | Applied metamaterials + antenna engineering |
 | **Noise resilience in hostile EM environments** | Analog compute is precision-fragile. Lattice-coded AirComp (the full Nazer/Gastpar result) is the information-theoretic answer — now demonstrated at toy scale in Tier 1.5 ([`rf_compute/lattice.py`](rf_compute/lattice.py)). Practical noise-resilient analog compute at scale remains open. | RF engineering + analog circuit design + information theory |
 | **6G standards integration** | AirComp is a 6G research candidate, not yet in 3GPP standardization work items. 3GPP integration is a multi-year institutional process. | 3GPP, wireless standards bodies |
-| **Tier 1.5 extensions: lattice-coded AirComp** | ✅ **Shipped** — the toy-scale Nazer/Gastpar 2007/2011 result: nested lattice codes, exact integer sums mod L, the compute-and-forward coefficient equation ([`docs/hello-world-lattice-aircomp.md`](docs/hello-world-lattice-aircomp.md)). The open extensions from here: the fading-channel version (coefficients estimated from a real channel, lattice-reduction coefficient selection), the SDR backend, and random-lattice ensembles beyond the repetition code. | Information theory + software engineering |
+| **Tier 1.5 extensions: lattice-coded AirComp** | ✅ **Shipped** — the toy-scale Nazer/Gastpar 2007/2011 result: nested lattice codes, exact integer sums mod L, the compute-and-forward coefficient equation ([`docs/hello-world-lattice-aircomp.md`](docs/hello-world-lattice-aircomp.md)). ✅ **Tier 1.6 shipped** — fading-channel coefficient selection: computation-rate maximization, MMSE α, Nazer/Gastpar norm-bound exhaustive search, LLL reduction ([`docs/hello-world-fading-coefficients.md`](docs/hello-world-fading-coefficients.md)). **The open extension**: an un-inverted receiver (real α < 1 with an R^n lattice decoder — the toy inverts the channel to stay exact), and complex fading with Gaussian-integer lattices (the literature's practical setting, Liu & Ling 2016). Also open: the exact polynomial algorithm of Sahraei & Gastpar 2014, which no OSS implementation currently provides. | Information theory + software engineering |
 | **Commercial fabrication** | Pure-RF commercial compute does not exist. Lightmatter is pursuing the optical frontier. | Industry (Lightmatter, Lightelligence, Salience Labs, Ayar Labs) |
 
 ### Medium-priority contributions
@@ -101,8 +103,9 @@ These are the problems the field map explicitly defers to the community. They ar
 
 ### For a code contribution to the SDR kernel abstraction
 
-1. **The kernel abstraction is a future deliverable** — not yet scaffolded. Open an issue proposing the abstraction before contributing code.
+1. **The kernel abstraction is shipped** (`rf_compute/rf_compute.py` — one `WaveComputeKernel`, one operator class per lineage, `apply`/`solve`). Extend it; open an issue first if your change touches the shared interface.
 2. **The abstraction must map to all four lineages**, not just one. A kernel that only covers AirComp is not the bridge; it's a re-creation of AirComp tooling.
+3. **Reproducibility is a hard bar for code**: any new randomness must flow through a caller-supplied `numpy` `Generator`. A simulation that cannot repeat a run cannot be verified — the Tier 1.5 kernel shipped with exactly this defect once, and it is now a regression test.
 
 ### For a correction
 

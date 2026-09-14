@@ -69,16 +69,25 @@ for n in [4, 8, 16, 32, 64]:
 # ── 4. The honest scoreline: all three schemes at matched power ────────────
 print()
 print("4. THE HONEST SCORELINE   (2 nodes, L=16, n=32, 5 dB, 4000 trials)")
-print("   lattice: exact sum, ONE channel use")
-print("   analog:  1 use, but no mod-L arithmetic + power-shaping gap")
+print("   lattice: exact sum mod L, ONE channel use, coefficient function class")
+print("   analog:  1 use, BEST-CASE encoding (centered, power-matched) — it")
+print("            computes the plain sum and tracks the lattice closely; the")
+print("            single-user rate is the ceiling for both (that IS the theorem)")
 print("   tdma:    N uses, exact per slot, N-way error union")
 print(f"   {'scheme':>8}  {'error':>8}  {'channel uses':>12}")
 mc = monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=4000, seed=42)
 for scheme in ['lattice', 'analog', 'tdma']:
     print(f"   {scheme:>8}  {mc[scheme]['error_rate']:>8.4f}  "
           f"{mc[scheme]['channel_uses_per_trial']:>12}")
+print()
+print("   The TDMA row is the resource story: N times the channel uses and")
+print("   an N-way error union to compute what the lattice gets in one use.")
+print("   The lattice's edges over analog are the function class (coefficients),")
+print("   the hard exactness threshold, structural privacy, and fading")
+print("   robustness — see examples/tier1_6_fading_coefficients.py.")
 
 print()
 print("Provenance: Nazer & Gastpar, IEEE Trans. Inf. Theory 53(10) 3498 (2007),")
 print("             57(10) 6463 (2011), DOI 10.1109/TIT.2011.2165816")
 print("Walkthrough: docs/hello-world-lattice-aircomp.md")
+print("Fading tier:  examples/tier1_6_fading_coefficients.py")

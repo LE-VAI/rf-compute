@@ -9,8 +9,9 @@ import pytest
 
 from rf_compute.lattice import (
     mod_lattice, encode, decode, channel, run_trial, monte_carlo,
+    fading_trial, fading_scoreline,
 )
-from rf_compute import LatticeAirCompOperator, WaveComputeKernel
+from rf_compute import LatticeAirCompOperator, FadingAirCompOperator, WaveComputeKernel
 
 
 # ─── mod_lattice ────────────────────────────────────────────────────────
@@ -191,14 +192,48 @@ def test_run_trial_returns_all_three_schemes():
     assert r['channel_uses']['tdma'] == 2  # == num_nodes
 
 
-def test_monte_carlo_lattice_beats_both_baselines_at_moderate_snr():
+def test_monte_carlo_lattice_beats_tdma_at_moderate_snr():
     # The theorem made visible: at matched power, one lattice channel use
-    # beats TDMA (which pays N channel uses AND an N-way error union) and
-    # analog superposition (which carries no mod-L arithmetic, pays a
-    # shaping penalty, and keeps an irreducible MSE).
-    mc = monte_carlo(num_nodes=2, L=16, n=32, snr_db=10.0, trials=400, seed=4)
+    # beats TDMA — which pays N channel uses AND an N-way error union.
+    # Robust across seeds (verified 10/10 in development).
+    mc = monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=600, seed=4)
     assert mc['lattice']['error_rate'] < mc['tdma']['error_rate']
-    assert mc['lattice']['error_rate'] < mc['analog']['error_rate']
+
+
+def test_monte_carlo_lattice_analog_parity_at_matched_power():
+    # The HONEST scoreline: with both schemes at the same per-node power and
+    # both banking the n-fold averaging gain, lattice and analog track each
+    # other closely on the PLAIN SUM — that is the theorem's own statement
+    # (the single-user rate is the ceiling for both; the computation rate
+    # cannot exceed it). The lattice's genuine edges are the coefficient
+    # function class, the hard exactness threshold, structural privacy, and
+    # fading robustness — NOT a lower plain-sum error rate.
+    mc = monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=600, seed=4)
+    gap = abs(mc['lattice']['error_rate'] - mc['analog']['error_rate'])
+    assert gap < 0.12, f"lattice/analog should be at parity, gap={gap:.4f}"
+
+
+def test_monte_carlo_is_reproducible():
+    # Same seed -> same numbers, bit for bit. Every random draw (messages,
+    # codewords, dithers, channel noise, baseline noise) flows through one
+    # seeded Generator. Regression test: the old channel() drew unseeded
+    # noise and this failed.
+    a = monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=200, seed=123)
+    b = monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=200, seed=123)
+    assert a == b
+    c = monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=200, seed=124)
+    assert c != a
+
+
+def test_channel_is_reproducible_with_seeded_rng():
+    rng_a = np.random.default_rng(0)
+    rng_b = np.random.default_rng(0)
+    L = 16.0
+    xa = [encode(3, L, 64, rng_a)[0], encode(7, L, 64, rng_a)[0]]
+    xb = [encode(3, L, 64, rng_b)[0], encode(7, L, 64, rng_b)[0]]
+    ya = channel(xa, L, snr_db=5.0, rng=rng_a)
+    yb = channel(xb, L, snr_db=5.0, rng=rng_b)
+    np.testing.assert_array_equal(ya, yb)
 
 
 def test_tdma_pays_the_error_union():
@@ -315,3 +350,85 @@ def test_kernel_result_is_deterministic():
 def test_lattice_operator_registered_in_all():
     import rf_compute as pkg
     assert 'LatticeAirCompOperator' in pkg.__all__
+
+
+# ─── Tier 1.6 — the fading channel ──────────────────────────────────────
+
+def test_fading_trial_is_reproducible():
+    t1 = fading_trial(num_nodes=3, L=16, n=32, snr_db=5.0,
+                      rng=np.random.default_rng(3))
+    t2 = fading_trial(num_nodes=3, L=16, n=32, snr_db=5.0,
+                      rng=np.random.default_rng(3))
+    assert t1 == t2
+
+
+def test_fading_trial_returns_both_strategies():
+    t = fading_trial(num_nodes=3, L=16, n=32, snr_db=5.0,
+                     rng=np.random.default_rng(5))
+    for key in ['gains', 'messages', 'selected', 'plain', 'snr_db']:
+        assert key in t
+    for mode in ['selected', 'plain']:
+        for key in ['value', 'true', 'exact', 'coefficients', 'power_factor', 'rate']:
+            assert key in t[mode]
+    assert t['channel_uses'] == 1
+
+
+def test_fading_selection_beats_plain_sum_on_rate():
+    # The Tier 1.6 claim: the plain sum has rate ZERO on most fading
+    # realizations (its alignment is wrong for the realized channel);
+    # selection finds a decodable equation. Robust across seeds.
+    fs = fading_scoreline(num_nodes=3, L=16, n=32, snr_db=5.0,
+                          trials=400, seed=11, selection="exhaustive")
+    assert fs['selected']['mean_rate_bits'] > fs['plain']['mean_rate_bits']
+    assert fs['plain_rate_zero_fraction'] > 0.5
+    # And the selected equation decodes about as reliably as the plain sum
+    # does in the inverted toy — the win is decodability, not fewer errors.
+    assert fs['selected']['error_rate'] < 0.5
+
+
+def test_fading_selection_drops_deep_fades_instead_of_paying():
+    # Selection can set a_i = 0 for a faded node: the power factor
+    # sum (a_i/h_i)^2 / N stays far below the plain sum's cost on the same
+    # channel (which must invert every fade, including the deep ones).
+    fs = fading_scoreline(num_nodes=3, L=16, n=32, snr_db=5.0,
+                          trials=400, seed=11, selection="exhaustive")
+    assert fs['selected']['mean_power_factor'] < fs['plain']['mean_power_factor']
+
+
+def test_fading_all_selection_methods_find_positive_rate():
+    for method in ['exhaustive', 'lll', 'rounded']:
+        fs = fading_scoreline(num_nodes=3, L=16, n=32, snr_db=5.0,
+                              trials=150, seed=17, selection=method)
+        assert fs['selected']['mean_rate_bits'] > 0.0, method
+
+
+def test_fading_scoreline_is_reproducible():
+    a = fading_scoreline(num_nodes=2, L=16, n=32, trials=100, seed=21)
+    b = fading_scoreline(num_nodes=2, L=16, n=32, trials=100, seed=21)
+    assert a == b
+
+
+def test_fading_operator_validates_selection():
+    with pytest.raises(ValueError):
+        FadingAirCompOperator(num_nodes=3, selection="nope")
+
+
+def test_fading_operator_validates_coefficients_length():
+    with pytest.raises(ValueError):
+        FadingAirCompOperator(num_nodes=3, coefficients=[1, 2])
+
+
+def test_kernel_fading_round_seeded():
+    k = _kernel()
+    op = FadingAirCompOperator(num_nodes=3, modulus=16, dimension=32,
+                               snr_db=5.0, selection="exhaustive")
+    r1 = k.apply(op, 7)
+    r2 = k.apply(op, 7)
+    assert r1 == r2
+    assert len(r1['gains']) == 3
+    assert r1['selected']['rate'] >= r1['plain']['rate']
+
+
+def test_fading_operator_registered_in_all():
+    import rf_compute as pkg
+    assert 'FadingAirCompOperator' in pkg.__all__

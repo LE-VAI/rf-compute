@@ -304,14 +304,15 @@ The experiment above uses analog amplitude superposition. The actual Nazer & Gas
 - Instead of sending `x1/h1` as a continuous amplitude, you send a lattice codeword whose structure guarantees the receiver recovers the finite-field sum.
 - This requires nested lattice codes — the construction is in the paper's Section IV.
 - **This is now implemented:** see [hello-world-lattice-aircomp.md](hello-world-lattice-aircomp.md) — the Tier 1.5 walkthrough. The nested-lattice kernel (`rf_compute/lattice.py`) runs free on NumPy: exact integer sums mod L from one noisy channel use, with the compute-and-forward coefficient equation and the three-scheme scoreline.
+- **And the fading case:** see [hello-world-fading-coefficients.md](hello-world-fading-coefficients.md) — the Tier 1.6 walkthrough. Where the gains fade, the receiver must *select* which integer combination to decode; the plain sum is undecodable (rate zero) on ~95% of fading realizations.
 
 ### Toward Tier 2 (wave-domain convolution)
 
-The AirComp sum is a single operation (addition). Tier 2 upgrades the operator: instead of the channel computing `x1 + x2`, you program a filter chain that computes `conv(x, h)` — convolution — in the wave domain. That's the Silva et al. 2014 result. See `docs/hello-world-convolution.md` *(coming)*.
+The AirComp sum is a single operation (addition). Tier 2 upgrades the operator: instead of the channel computing `x1 + x2`, you program a filter chain that computes `conv(x, h)` — convolution — in the wave domain. That's the Silva et al. 2014 result. See `docs/hello-world-convolution.md`.
 
 ### Toward Tier 3 (matrix inversion via feedback)
 
-Tier 3 closes the loop: the receiver feeds its output back to the transmitter, and the feedback loop solves `Ax = b` for `x` in the wave domain. That's the *Nature Communications* 2025 result. See `docs/hello-world-matrix-inversion.md` *(coming)*.
+Tier 3 closes the loop: the receiver feeds its output back to the transmitter, and the feedback loop solves `Ax = b` for `x` in the wave domain. That's the *Nature Communications* 2025 result. See `docs/hello-world-matrix-inversion.md`.
 
 ---
 

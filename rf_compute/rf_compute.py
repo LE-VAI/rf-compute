@@ -134,6 +134,59 @@ class LatticeAirCompOperator(Operator):
 
 
 @dataclass
+class FadingAirCompOperator(Operator):
+    """
+    Lineage 2 — Over-the-Air Computation on a FADING channel (Tier 1.6).
+
+    Tier 1.5 SET the channel gains to integers (h_i = a_i) — exact, but it
+    hides the real problem: on a fading channel the receiver must CHOOSE
+    which integer combination to decode. This operator runs that choice:
+
+      - gains drawn i.i.d. (real baseband fading),
+      - coefficients SELECTED by maximizing the Nazer/Gastpar computation
+        rate R = 1/2 log2(1 / (alpha^2/SNR + ||alpha h - a||^2)) over a,
+      - both strategies reported: the selected combination vs. the
+        transmit-for-plain-sum baseline.
+
+    What the numbers show (see docs/hello-world-fading-coefficients.md):
+    selection finds a decodable equation where the plain sum's rate is zero
+    (its alignment is wrong for the realized fading) and costs a fraction
+    of the power channel inversion would burn on deep fades — selection
+    DROPS a faded node (a_i = 0) instead of paying to invert it.
+
+    Maps to: Nazer & Gastpar, IEEE Trans. Inf. Theory 57(10) 6463 (2011);
+    coefficient algorithms — Sahraei & Gastpar (Allerton 2014, exact
+    polynomial), Liu & Ling, IEEE TWC 15(12) 8039 (2016, efficient search);
+    MMSE scaling and the rate formula — Huang & Burr, arXiv:1704.05007.
+    Walkthrough: docs/hello-world-fading-coefficients.md
+    """
+    num_nodes: int = 3
+    modulus: int = 16
+    dimension: int = 32
+    snr_db: float = 5.0
+    selection: str = "exhaustive"   # 'exhaustive' | 'lll' | 'rounded'
+    coefficients: Optional[Sequence] = None   # None = SELECT from the channel
+    lineage: str = "aircomp_fading"
+
+    def __post_init__(self):
+        if self.modulus < 2:
+            raise ValueError("modulus must be >= 2")
+        if self.dimension < 1:
+            raise ValueError("dimension must be >= 1")
+        if self.selection not in ("exhaustive", "lll", "rounded"):
+            raise ValueError(
+                f"selection '{self.selection}' not supported; "
+                "use 'exhaustive', 'lll', or 'rounded'"
+            )
+        if self.coefficients is not None:
+            self.coefficients = [int(c) for c in self.coefficients]
+            if len(self.coefficients) != self.num_nodes:
+                raise ValueError(
+                    f"coefficients length {len(self.coefficients)} != num_nodes {self.num_nodes}"
+                )
+
+
+@dataclass
 class ConvolutionOperator(Operator):
     """
     Lineage 1 — Computational Metamaterials.
@@ -275,6 +328,8 @@ class WaveComputeKernel:
             return self._apply_aircomp(op, inputs)
         elif isinstance(op, LatticeAirCompOperator):
             return self._apply_lattice_aircomp(op, inputs)
+        elif isinstance(op, FadingAirCompOperator):
+            return self._apply_fading_aircomp(op, inputs)
         elif isinstance(op, ConvolutionOperator):
             return self._apply_convolution(op, inputs)
         elif isinstance(op, ReservoirOperator):
@@ -334,15 +389,22 @@ class WaveComputeKernel:
 
     def _apply_lattice_aircomp(self, op: LatticeAirCompOperator, inputs) -> dict:
         """
-        Run one nested-lattice AirComp round.
+        Run one nested-lattice AirComp round on the INTEGER-ALIGNED channel.
 
-        inputs is a list of N integer messages in {0..L-1}. Returns a dict:
-          'value'         — the decoded sum a·w mod L (exact, whp)
+        inputs is a list of N integer messages in {0..L-1}. Coefficients are
+        realized as channel gains (h_i = a_i), so this round is exact. Returns:
+          'value'         — the decoded sum a·w mod L (exact)
           'true_value'    — ground truth for verification
           'exact'         — bool
-          'messages'      — what was transmitted (never decodable individually
-                            from the channel output alone)
-          'trial'         — the full lattice.run_trial record
+          'messages'      — what was transmitted (verification only; the
+                            receiver structurally cannot recover these
+                            individually from the channel output alone)
+          'modulus'       — L
+          'coefficients'  — the integer a vector used
+
+        For the FADING channel — gains drawn from a channel, coefficients
+        SELECTED by computation-rate maximization rather than set — use
+        FadingAirCompOperator, which runs lattice.fading_trial.
 
         The simulation backend is the reference; the SDR backend transmits the
         same codewords over RF (the walkthrough covers sync and dither-seed
@@ -387,6 +449,35 @@ class WaveComputeKernel:
             'modulus': L,
             'coefficients': list(a),
         }
+
+    # ─── Fading AirComp (Lineage 2, Tier 1.6) ─────────────────────────────
+
+    def _apply_fading_aircomp(self, op: FadingAirCompOperator, inputs=None) -> dict:
+        """
+        Run one fading-channel AirComp round.
+
+        inputs: optional seed (int) or numpy Generator for reproducible
+        fading; None draws fresh randomness. The messages, gains, and
+        codewords are all generated internally — the point of this operator
+        is the CHANNEL, not the caller's messages. Returns the full
+        lattice.fading_trial record:
+          'gains'      — the realized fading
+          'selected'   — decode of the computation-rate-maximizing combination
+                         (value, true, exact, coefficients, power_factor, rate)
+          'plain'      — the transmit-for-plain-sum baseline through the same channel
+          'deep_fades' — count of |h_i| < 0.2
+        """
+        from . import lattice as _lattice
+        if inputs is None:
+            rng = np.random.default_rng()
+        elif isinstance(inputs, (int, np.integer)):
+            rng = np.random.default_rng(int(inputs))
+        else:
+            rng = inputs
+        return _lattice.fading_trial(
+            num_nodes=op.num_nodes, L=op.modulus, n=op.dimension,
+            snr_db=op.snr_db, rng=rng, selection=op.selection,
+        )
 
     # ─── Convolution (Lineage 1) ─────────────────────────────────────────
 
@@ -500,6 +591,7 @@ def hilbert(N: int = 64) -> ConvolutionOperator:
 
 __all__ = [
     'Operator', 'AirCompOperator', 'LatticeAirCompOperator',
+    'FadingAirCompOperator',
     'ConvolutionOperator', 'InversionOperator', 'ReservoirOperator',
     'WaveComputeKernel',
     'boxcar', 'differencer', 'matched', 'hilbert',

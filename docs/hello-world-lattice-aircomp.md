@@ -21,8 +21,11 @@ What this walkthrough demonstrates, precisely:
 What this walkthrough does NOT do (the honest list):
 
 - **No RF hardware.** The channel is simulated AWGN. The signal-processing structure is complete and hardware-ready (the SDR differences are sync and dither-seed sharing — covered below), but this page is the $0 tier: a laptop, Python, NumPy.
-- **Toy code family.** The theory uses high-dimensional random lattice ensembles; we use repetition across n coordinates — which already exhibits the exponential error decay. The theory optimizes a receiver scaling α; we fix α = 1 (inverted channel). The 2007 paper computes over finite fields; our `Z_L` is the integers mod L, the cleanest finite ring for pedagogy.
-- **Coefficients are realized as channel gains.** In compute-and-forward the integer coefficients a_i fall out of the channel gains. Here we *set* the gains — the toy makes the equation demonstrable, not the fading-channel estimation problem.
+- **Toy code family.** The theory uses high-dimensional random lattice ensembles; we use repetition across n coordinates — which already exhibits the exponential error decay. The 2007 paper computes over finite fields; our `Z_L` is the integers mod L, the cleanest finite ring for pedagogy.
+- **The receiver scaling α deserves precision, not hand-waving.** The theory optimizes α; we fix α = 1. That is *not* a shortcut in this construction: with the integer-aligned channel (h_i = a_i) and dithers replayed at those same weights, the self-noise term of the effective-noise decomposition — `Σ(α·h_i − a_i)·x_i` — vanishes identically at α = 1. The decode is exact by construction. (Note the theory's MMSE α sits slightly *below* 1 even on a unit-gain channel: `α* = SNR/(1+SNR)`. Tier 1.6 shows what that buys on a real channel, where perfect alignment is impossible for N ≥ 2.)
+- **Coefficients are realized as channel gains.** In compute-and-forward the integer coefficients a_i fall out of the channel gains. Here we *set* the gains — this toy demonstrates the equation, not the selection problem. The selection problem is Tier 1.6 ([hello-world-fading-coefficients.md](hello-world-fading-coefficients.md)).
+- **What it decodes with.** The circular mean is the exact ML estimator of the mean direction for a **von Mises** distribution; for the wrapped normal it is the first trigonometric moment — consistent and near-optimal, but not the exact MLE (which requires an EM iteration; see Greco, Saraceno & Agostinelli, *Stats* 4(2), 454–471, 2021). At toy scale, with well-spread wrapped phases, the two agree to within the rounding threshold.
+- **One channel-use comparison, stated honestly.** AirComp-in-one-use vs TDMA/OMA-in-N-slots is the field's accounting convention (see the AirComp literature, e.g. arXiv:2212.14003 and arXiv:2111.05719), not a claim that lattice coding beats N independent point-to-point links in general — the degrees-of-freedom of compute-and-forward are bounded (Niesen & Whiting, arXiv:1101.2182). The defensible claim is the resource accounting: one slot computing a function of all N, versus N slots decoding all N.
 
 ---
 
@@ -44,7 +47,7 @@ x_i = [v_i − d_i] mod L        v_i = w_i + L·k_i (random k_i)
                                 d_i uniform on the cell
 ```
 
-The **dither** does two jobs (Erez & Zamir 2004, on which Nazer/Gastpar build): it makes the transmitted signal uniform over the cell (power shaping) and statistically independent of the message (the waveform alone reveals nothing). The dither is **not secret** — the receiver gets it from a shared PRNG seed. What the receiver never learns is the messages.
+The **dither** does two jobs (Erez & Zamir 2004, on which Nazer/Gastpar build): it makes the transmitted signal uniform over the cell (power shaping) and statistically independent of the message (the waveform alone reveals nothing). The dither is **not secret** — the receiver gets it from a shared PRNG seed. That assumption is canonical, not a convenience: Erez & Zamir's construction states the dither is "known to both transmitter and receiver (common randomness)" (*IEEE Trans. Inf. Theory* 50(10), 2004). What the receiver never learns is the messages.
 
 ### The channel superposes
 
@@ -78,7 +81,7 @@ Each of the n coordinates of `r` is an independent noisy copy of the same intege
 2. Average the vectors
 3. Read the angle, round, mod L
 
-Full `√n` averaging gain at any L. This is the pedagogical heart of the construction: **the lattice doesn't change the channel; it changes what the noise is allowed to do.** Noise that would smear an analog estimate now has to push an integer across a half-integer boundary — and it has to do it in *every* coordinate at once to win.
+Full `√n` averaging gain at any L. (Estimator note: the circular mean is the exact ML estimator of the mean direction for a von Mises distribution; for the wrapped normal it is the first trigonometric moment — near-optimal and consistent, but not the exact MLE.) This is the pedagogical heart of the construction: **the lattice doesn't change the channel; it changes what the noise is allowed to do.** Noise that would smear an analog estimate now has to push an integer across a half-integer boundary — and it has to do it in *every* coordinate at once to win.
 
 ---
 
@@ -173,11 +176,18 @@ At 5 dB, two nodes, L=16, n=32, 4000 trials:
 
 | scheme | error | channel uses | what it actually computes |
 |---|---:|---:|---|
-| **lattice** | 0.32 | **1** | the exact sum mod L; individual messages structurally absent |
-| analog (Tier 1) | 0.58 | 1 | a real-valued estimate of the raw sum; no mod-L arithmetic; power-shaping gap (factor-2 noise margin at matched power) |
-| tdma (routing) | 0.44 | **2** | every message decoded first, then summed; N-way error union (one bad slot ruins the sum) |
+| **lattice** | 0.32 | **1** | the exact sum mod L; individual messages structurally absent; the integer-coefficient function class |
+| analog (Tier 1) | 0.28 | 1 | a real-valued estimate of the plain sum (best-case encoding: centered, power-matched) — **at parity with the lattice**, because the single-user rate is the ceiling for both |
+| tdma (routing) | 0.43 | **2** | every message decoded first, then summed; N-way error union (one bad slot ruins the sum) |
 
-Read the TDMA row carefully — it is the point of the whole result. TDMA decodes each slot at nearly the lattice's per-slot reliability, pays **N times** the channel resources... and still loses to the lattice's single use, because its errors are a union across slots. **The sum is decodable at the rate of ONE user while all N transmit.** That is the Nazer/Gastpar computation-rate result, made visible in one table.
+Read those numbers honestly — they surprised us too when the baseline was fixed, and the surprise is the lesson. With the analog baseline given its **best-case** encoding (values centered on the cell, scaled to exactly the same per-node power the dithered lattice codeword uses, and the same n-fold averaging gain), analog tracks the lattice almost exactly on the **plain sum**. That is not a weakness of the result; it is the theorem's own statement: the computation rate cannot exceed the single-user rate, and on a unit-gain channel with a = 1 the two constructions sit on the same ceiling. An earlier version of this table showed analog "strictly worse" — that was an artifact of handicapping the baseline (transmitting raw uncentered values at half scale), and it has been corrected.
+
+The lattice's genuine edges are not the plain-sum error rate:
+
+1. **The function class.** The lattice decodes `Σ a_i·w_i mod L` for any integer vector — with coefficients you can select (Tier 1.6). Analog computes one function: the plain real-valued sum.
+2. **The hard exactness threshold.** The lattice's error falls exponentially in n; an analog estimate's MSE shrinks as σ²/n but its error against an integer target has no such threshold behavior.
+3. **Structural privacy.** The receiver recovers only the sum; the individual messages are absent, not masked.
+4. **The resource accounting vs TDMA.** Read the TDMA row — TDMA decodes each slot at nearly the lattice's per-slot reliability, pays **N times** the channel resources... and still loses to the lattice's single use, because its errors are a union across slots. **The sum is decodable in ONE slot while all N transmit.** That is the Nazer/Gastpar computation-rate result, made visible in one table.
 
 ### The privacy property (not in the numbers)
 
@@ -190,30 +200,30 @@ The lattice receiver recovers `Σ w_i mod L` and nothing else. Not masked, not e
 | Symptom | Cause | Fix |
 |---|---|---|
 | `error_rate` looks high at small n | It is — the exponential decay needs dimension. Watch the n=4→64 sweep; that's the theorem working, not a bug. |
-| Analog baseline beats lattice at very high SNR | Expected at the toy scale: analog's shaping penalty vanishes as noise→0. The lattice's advantages (exactness threshold, mod-L arithmetic, privacy) remain. Compare at *moderate* SNR — that's the regime the result lives in. |
+| Analog matches or beats lattice at high SNR | **Expected, and it is the theorem.** The computation rate cannot exceed the single-user rate; with both constructions at matched power on the plain sum, they share the ceiling. The lattice's edges are the coefficient function class, the exactness threshold, privacy, and fading robustness — compare there, not on plain-sum error. |
 | Coefficient decode returns the plain sum | The gains must be applied at the *channel* (`gains=a` in `channel()`, or the kernel's coefficient path) AND replayed at the decoder (`a=a`). One without the other breaks the algebra. |
 | `modulus=2` looks degenerate | It's the 1-bit case — legal and instructive (sums mod 2 = XOR). The interesting privacy/error behavior shows at L≥8. |
-| Results vary between runs | `channel()` draws unseeded noise (the physical channel doesn't take seeds). Pass a seeded `rng` to `run_trial`/`monte_carlo` for reproducible numbers. |
+| Results vary between runs | You didn't pass a seed. All randomness flows through one Generator now — `monte_carlo(seed=...)` and `fading_trial(rng=...)` are bit-for-bit reproducible. (An earlier version drew channel noise unseeded; that is fixed.) |
 
 ---
 
 ## What this proves
 
-1. **Exact computation from a noisy channel is possible at one channel use.** Not an estimate that degrades — a hard-decision decode with error probability decaying exponentially in the code dimension. Tier 1's analog sum cannot cross this line by construction.
+1. **Exact computation from a noisy channel is possible at one channel use.** Not an estimate that degrades — a hard-decision decode with error probability decaying exponentially in the code dimension. Analog superposition cannot cross this line by construction.
 
-2. **The computation-rate result, made visible.** Routing pays N channel uses AND unions its errors. The lattice scheme computes the same function in one use, at lower error. Interference is not merely tolerated — it *is* the addition.
+2. **The computation-rate result, made visible.** Routing pays N channel uses AND unions its errors. The lattice scheme computes a function of all N messages in one use, at lower error. Interference is not merely tolerated — it *is* the addition.
 
 3. **The receiver computes a function, not the inputs.** `Σ a_i·w_i mod L` is what's decodable. The individual messages are structurally absent. This is the seed of "compute, don't decode" — the design stance the 6G AirComp literature builds on.
 
-4. **Structure beats power.** The lattice codeword, the dither, and the mod-L reduction together buy exactness at the *same* power the analog scheme wastes on a smeared estimate. The win is algebra, not watts.
+4. **Structure buys capability, not a better sum.** The lattice and the (best-case) analog baseline share the single-user ceiling on the plain sum — the theorem says they must. What the lattice adds is a function *class* (any integer combination, selected to match the channel), the hard threshold, and privacy. The win is algebra, not watts.
 
 ---
 
 ## Going deeper
 
-### Toward the fading-channel version
+### Toward the fading-channel version — Tier 1.6 (implemented)
 
-The toy sets the channel gains; the real compute-and-forward problem is that gains fall out of a fading channel and the receiver *chooses* integer a_i to maximize the computation rate (lattice-reduction algorithms). Natural next surface: a `fading` channel model where a_i are estimated, not set.
+Tier 1.5 SET the channel gains to integers; the real compute-and-forward problem is that gains fall out of a fading channel and the receiver *chooses* integer a_i to maximize the computation rate. That is now implemented: [`hello-world-fading-coefficients.md`](hello-world-fading-coefficients.md) — computation-rate maximization, MMSE α, the Nazer/Gastpar norm-bound search, LLL reduction, and the honest finding that the plain sum is undecodable on ~95% of fading channels while selection finds a decodable equation and drops faded nodes instead of paying to invert them.
 
 ### Toward the SDR version
 
@@ -239,6 +249,6 @@ This tier runs entirely in simulation — no RF transmission, nothing to license
 
 - **Maps to:** Nazer & Gastpar, "Computation over multiple-access channels," *IEEE Trans. Inf. Theory* 53(10), 3498–3516 (2007). [DOI: 10.1109/TIT.2007.904734](https://doi.org/10.1109/TIT.2007.904734)
 - **Namesake extension:** Nazer & Gastpar, "Compute-and-forward: Harnessing interference through structured codes," *IEEE Trans. Inf. Theory* 57(10), 6463–6486 (2011). [DOI: 10.1109/TIT.2011.2165816](https://doi.org/10.1109/TIT.2011.2165816)
-- **Dithered lattice coding:** Erez & Zamir, "Achieving 1/2 log (1+SNR) over the additive white Gaussian noise channel using lattice codes," *IEEE Trans. Inf. Theory* 50(10), 2293–2314 (2004).
+- **Dithered lattice coding:** Erez & Zamir, "Achieving 1/2 log (1+SNR) on the AWGN channel with lattice encoding and decoding," *IEEE Trans. Inf. Theory* 50(10), 2293–2314 (2004). [DOI: 10.1109/TIT.2004.834787](https://doi.org/10.1109/TIT.2004.834787)
 - **Module:** `rf_compute/lattice.py` · **Operator:** `LatticeAirCompOperator` · **Example:** `examples/tier1_5_lattice_aircomp_kernel.py` · **Tests:** `tests/test_lattice_aircomp.py`
-- **Honest scope:** Toy lattice family (repetition across n coordinates, α = 1, Z_L), simulated AWGN, coefficients realized as set channel gains. The exponential error decay, the computation-rate advantage over routing, and the structural privacy property are demonstrated at toy scale; the random-lattice ensembles and fading-channel coefficient selection of the full theory are not reproduced.
+- **Honest scope:** Toy lattice family (repetition across n coordinates, α = 1, Z_L), simulated AWGN, coefficients realized as set channel gains. The exponential error decay and the resource advantage over routing are demonstrated at toy scale. The random-lattice ensembles of the full theory are not reproduced; coefficient selection on a fading channel is Tier 1.6 ([hello-world-fading-coefficients.md](hello-world-fading-coefficients.md)).

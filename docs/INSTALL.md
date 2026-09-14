@@ -3,10 +3,12 @@
 ## 60-second quick start (simulation, no hardware)
 
 ```bash
-git clone https://github.com/rf-compute/rf-compute.git
+git clone https://github.com/LE-VAI/rf-compute.git
 cd rf-compute
 pip install -e .
 python examples/tier1_aircomp_kernel.py    # AirComp: 3+5=8
+python examples/tier1_5_lattice_aircomp_kernel.py  # exact lattice sums
+python examples/tier1_6_fading_coefficients.py     # coefficient selection
 python examples/tier2_convolution_kernel.py # 4 operators
 python examples/tier3_inversion_kernel.py   # solves Ax=b
 ```
@@ -151,7 +153,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-This installs pytest, SoapySDR, and matplotlib together. Run the test suite with `pytest` from the repo root. (The test suite is a future deliverable; for now, the three `examples/*.py` scripts are the smoke test — if they run, the kernel is healthy.)
+This installs pytest, SoapySDR, and matplotlib together. Run the test suite with `pytest` from the repo root — 92 tests covering the kernel, the lattice machinery, coefficient selection, and reproducibility. The `examples/*.py` scripts also run as smoke tests: if they run, the kernel is healthy.
 
 ---
 
@@ -174,8 +176,10 @@ This installs pytest, SoapySDR, and matplotlib together. Run the test suite with
 Once you can run the examples, work through the walkthroughs in order:
 
 1. [`docs/hello-world-aircomp.md`](hello-world-aircomp.md) — Tier 1, AirComp sum (needs 2× HackRF + 1× RTL-SDR, ~$350 clone / ~$725 official)
-2. [`docs/hello-world-convolution.md`](hello-world-convolution.md) — Tier 2, wave-domain convolution (needs 1× HackRF + 1× RTL-SDR, ~$200 clone / ~$395 official)
-3. [`docs/hello-world-matrix-inversion.md`](hello-world-matrix-inversion.md) — Tier 3, matrix inversion (3 modes: free / $200 / $350)
+2. [`docs/hello-world-lattice-aircomp.md`](hello-world-lattice-aircomp.md) — Tier 1.5, lattice-coded exact sums (free, simulation)
+3. [`docs/hello-world-fading-coefficients.md`](hello-world-fading-coefficients.md) — Tier 1.6, fading-channel coefficient selection (free, simulation)
+4. [`docs/hello-world-convolution.md`](hello-world-convolution.md) — Tier 2, wave-domain convolution (needs 1× HackRF + 1× RTL-SDR, ~$200 clone / ~$395 official)
+5. [`docs/hello-world-matrix-inversion.md`](hello-world-matrix-inversion.md) — Tier 3, matrix inversion (3 modes: free / $200 / $350)
 
 Each walkthrough is self-contained: hardware list, parts costs, code, expected output, troubleshooting, safety.
 

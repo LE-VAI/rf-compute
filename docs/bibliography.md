@@ -70,9 +70,149 @@ Citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Where a pa
 
 **Citation:** Nazer, B. & Gastpar, M. "Computation over multiple-access channels," *IEEE Trans. Inf. Theory* 53(10), 3498–3516 (2007) — the founding result. Namesake extension: "Compute-and-forward: Harnessing interference through structured codes," *IEEE Trans. Inf. Theory* 57(10), 6463–6486 (2011). [DOI: 10.1109/TIT.2011.2165816](https://doi.org/10.1109/TIT.2011.2165816).
 
-**What it claims:** Lattice-coded interference over a multiple-access channel can compute functions (sums) directly in the wave domain — the receiver recovers the function of the transmitted messages without decoding each message individually. Interference is harnessed as computation, not cancelled as noise.
+**What it claims:** Lattice-coded interference over a multiple-access channel can compute functions (sums) directly in the wave domain — the receiver recovers the function of the transmitted messages without decoding each message individually. Interference is harnessed as computation, not cancelled as noise. The 2011 paper adds the computation-rate theorem and the coefficient vector: the receiver chooses an integer combination to decode, and the achievable rate is `R = ½ log₂⁺(P/(α²σ² + P‖αh − a‖²))` maximized over the scaling α and the integer vector a.
 
-**Why it matters for this surface:** This is the origin point of "RF as compute" as a formal information-theoretic concept — ~18 years old, not a new idea. Tier 1 of the hello-world ladder (`docs/hello-world-aircomp.md`) demonstrates the analog-superposition version of this result (the pedagogical core). The lattice-coded finite-field version (noise-resilient and exact) is flagged in the walkthrough as a "Tier 1.5" extension and named as a contribution target in `CONTRIBUTING.md`.
+**Why it matters for this surface:** This is the origin point of "RF as compute" as a formal information-theoretic concept — ~18 years old, not a new idea. Tier 1 of the hello-world ladder (`docs/hello-world-aircomp.md`) demonstrates the analog-superposition version of this result (the pedagogical core). Tier 1.5 (`docs/hello-world-lattice-aircomp.md`) implements the lattice-coded version: nested lattice codes, exact integer sums mod L, one channel use. Tier 1.6 (`docs/hello-world-fading-coefficients.md`) implements the coefficient-selection problem on a fading channel.
+
+---
+
+### Erez & Zamir 2004 — *IEEE Trans. Inf. Theory* — Dithered lattice coding
+
+**Citation:** Erez, U. & Zamir, R. "Achieving 1/2 log (1+SNR) on the AWGN channel with lattice encoding and decoding," *IEEE Trans. Inf. Theory* 50(10), 2293–2314 (2004). [DOI: 10.1109/TIT.2004.834787](https://doi.org/10.1109/TIT.2004.834787)
+
+**What it claims:** The full AWGN capacity is achievable with lattice codes under lattice DECODING (not maximum-likelihood), using a dithered nested-lattice construction. The dither — uniform on the coarse cell, "known to both transmitter and receiver (common randomness)" — shapes the transmitted signal to be uniform and message-independent, while the receiver subtracts it to recover the lattice structure.
+
+**Why it matters for this surface:** This is the machinery Nazer/Gastpar build compute-and-forward on, and it is the direct answer to the most common question about the Tier 1.5 code ("is sharing the dither cheating?"): no — sharing the dither is the construction's canonical assumption, stated in the founding paper. `rf_compute/lattice.py`'s `encode()`/`decode()` implement exactly this: the dither is generated from a shared seed and replayed by the receiver, never treated as a secret.
+
+---
+
+### Huang & Burr 2017 — *arXiv:1704.05007* — Coefficient selection algorithms and the rate formula
+
+**Citation:** Huang, Q. & Burr, A. "Low Complexity Coefficient Selection Algorithms for Compute-and-Forward." [arXiv:1704.05007](https://arxiv.org/abs/1704.05007)
+
+**What it claims:** Surveys and improves the algorithms for finding the integer coefficient vector maximizing the computation rate. Gives the MMSE receiver scaling in closed form — `α* = SNR·hᵀa/(1 + SNR‖h‖²)` — and the rate formula `R = ½ log₂(P/(α²σ² + P‖αh − a‖²))`, with the per-user power convention `E[‖x‖²] ≤ nP` and `SNR = P/σ²`.
+
+**Why it matters for this surface:** This is the reference the Tier 1.6 implementation's rate math is validated against — the normalization pin (a single node with unit gain returns exactly `½log₂(1+SNR)`) is the test. The paper's system model matches the toy's conventions verbatim, which is why the comparison numbers are meaningful rather than arbitrary.
+
+---
+
+### Liu & Ling 2016 — *IEEE Trans. Wireless Commun.* — Efficient integer coefficient search
+
+**Citation:** Liu, W. & Ling, C. "Efficient Integer Coefficient Search for Compute-and-Forward," *IEEE Trans. Wireless Commun.* 15(12), 8039–8050 (2016). [arXiv:1609.05490](https://arxiv.org/abs/1609.05490)
+
+**What it claims:** An efficient search algorithm for the optimal integer coefficient vector over the ring of Gaussian integers (and Eisenstein integers) — the complex-valued channel case. Exploits lattice reduction plus bounded enumeration rather than exhaustive search over the norm ball.
+
+**Why it matters for this surface:** This is the practical algorithm the Tier 1.6 `lll` method approximates (LLL reduction + small-coordinate enumeration). It is also the pointer for the honest gap named in that walkthrough: the literature's practical setting is complex fading, where two real dimensions and Gaussian-integer lattices align far better than the real-valued toy. Complex-channel support is the natural next tier.
+
+---
+
+### Sahraei & Gastpar 2014 — *Allerton* — Finding the best equation exactly
+
+**Citation:** Sahraei, S. & Gastpar, M. "Compute-and-forward: Finding the best equation," 52nd Annual Allerton Conf. on Communication, Control, and Computing (2014). [arXiv:1410.3656](https://arxiv.org/abs/1410.3656)
+
+**What it claims:** The coefficient-selection problem is an instance of the shortest-lattice-vector problem with special structure, and that special structure admits an exact solution of polynomial complexity — closing the gap between the exponential exhaustive search (Nazer/Gastpar's norm-bound method) and the heuristics.
+
+**Why it matters for this surface:** This is the theoretical peak of the selection lineage and the honest benchmark for the Tier 1.6 methods: the `exhaustive` method is exact-but-exponential, `lll` is polynomial-but-approximate, and this paper proves you can have both. Implementing it is a named contribution target.
+
+---
+
+### Niesen & Whiting 2011 — *arXiv:1101.2182* — The degrees-of-freedom bound
+
+**Citation:** Niesen, U. & Whiting, P. "The Degrees of Freedom of Compute-and-Forward." [arXiv:1101.2182](https://arxiv.org/abs/1101.2182)
+
+**What it claims:** Analyzes the degrees of freedom achieved by the lattice implementation of compute-and-forward and shows it is bounded — the lattice scheme does not achieve the full degrees of freedom of the channel in general.
+
+**Why it matters for this surface:** This is the guardrail against the most tempting overclaim. The honest statement (which the walkthroughs use) is a resource-accounting one: one channel use computes a function of all N messages, whereas TDMA needs N uses to decode all N. It is NOT "compute-and-forward beats N independent point-to-point links" — that claim collides with this bound. Every walkthrough that compares AirComp to TDMA cites this paper's caveat.
+
+---
+
+### Philosof, Zamir, Erez & Khisti 2009 — *arXiv:0904.1892* — Lattice strategies for the dirty MAC
+
+**Citation:** Philosof, T., Zamir, R., Erez, U. & Khisti, A. "Lattice Strategies for the Dirty Multiple Access Channel." [arXiv:0904.1892](https://arxiv.org/abs/0904.1892)
+
+**What it claims:** Generalizes the dirty-paper problem to a multiple-access setup and shows lattice strategies achieve positive rates independent of the interference — where classical random-binning (Costa) strategies vanish under strong interference. The gap to capacity is at most 0.167 bit.
+
+**Why it matters for this surface:** The multi-user extension that matches the Tier 1.5 architecture most closely: several transmitters, structured codes, interference as part of the operation. It is the bridge between Erez-Zamir's single-user dithered coding and Nazer-Gastpar's multi-user compute-and-forward, and it explains why *lattice* codes specifically (not just any structured code) are the right instrument.
+
+---
+
+### Cao, Zhu, Xu & Cui 2021 — *arXiv:2111.05719* — AirComp aggregation in federated learning
+
+**Citation:** Cao, X., Zhu, G., Xu, J. & Cui, S. "Transmission Power Control for Over-the-Air Federated Averaging at Network Edge." [arXiv:2111.05719](https://arxiv.org/abs/2111.05719)
+
+**What it claims:** Studies over-the-air federated averaging (Air-FedAvg) — AirComp-based gradient aggregation in federated edge learning — and shows an order-of-magnitude shorter training latency than digital OMA/TDMA baselines, with power control at the devices and denoising factors at the server.
+
+**Why it matters for this surface:** The applied, contemporary face of the same resource argument: AirComp's one-slot aggregation versus orthogonal multiple access's N slots is measured here in training latency, not just channel uses. This is the comparison convention the walkthroughs adopt (AirComp in 1 use vs TDMA in N), stated in the literature's own terms.
+
+---
+
+### Mitsiou, Bouzinis, Diamantoulakis, Schober & Karagiannidis 2022 — *arXiv:2212.14003* — AirComp for distributed optimization
+
+**Citation:** Mitsiou, N. A., Bouzinis, P. S., Diamantoulakis, P. D., Schober, R. & Karagiannidis, G. K. "Accelerating Distributed Optimization via Over-the-Air Computing." [arXiv:2212.14003](https://arxiv.org/abs/2212.14003)
+
+**What it claims:** An AirComp framework for general distributed convex optimization; proves asymptotic zero expected constraint violation despite fading and noise, and shows an order of magnitude faster convergence than TDMA.
+
+**Why it matters for this surface:** Pairs with the Air-FedAvg paper to establish that the AirComp-vs-TDMA resource comparison is the field's standard accounting, not a toy artifact. The "order of magnitude faster than TDMA" result is the applied counterpart of the Tier 1.5 scoreline table.
+
+---
+
+### Zamir 2014 — *Cambridge University Press* — The textbook
+
+**Citation:** Zamir, R. *Lattice Coding for Signals and Networks: A Structured Coding Approach to Quantization, Modulation and Multiuser Information Theory.* Cambridge University Press (2014). [DOI: 10.1017/CBO9781139045520](https://doi.org/10.1017/CBO9781139045520)
+
+**What it claims:** The comprehensive textbook treatment of lattice codes: dithered quantization, nested lattices, the Erez-Zamir capacity result, and the multiterminal settings (including compute-and-forward) in one unified framework.
+
+**Why it matters for this surface:** The single best "read the whole story" reference for the lattice machinery in `rf_compute/lattice.py` and `rf_compute/coefficients.py`. If a builder wants to go from the toy's repetition code to the theory's random ensembles, this is the book that gets them there.
+
+---
+
+### Greco, Saraceno & Agostinelli 2021 — *Stats* — Wrapped-normal maximum likelihood
+
+**Citation:** Greco, L., Saraceno, G. & Agostinelli, C. "Robust Fitting of a Wrapped Normal Model to Multivariate Circular Data and Outlier Detection," *Stats* 4(2), 454–471 (2021). [DOI: 10.3390/stats4020028](https://doi.org/10.3390/stats4020028)
+
+**What it claims:** Develops an EM-based maximum-likelihood estimation of wrapped-normal parameters (and a robust version with outlier detection) — the wrapped normal's MLE is iterative, unlike the von Mises case where the circular mean is exact.
+
+**Why it matters for this surface:** The precise citation behind the decoder note in Tier 1.5: the circular mean is the exact MLE for von Mises, but for the wrapped normal it is the first trigonometric moment (consistent, near-optimal, not the exact MLE). This is the kind of precision the surface's honesty bar requires — the walkthrough states it rather than claiming "optimal decoder."
+
+---
+
+### Mardia & Jupp 2000 — *Wiley* — Directional statistics
+
+**Citation:** Mardia, K. V. & Jupp, P. E. *Directional Statistics.* John Wiley & Sons (2000). [DOI: 10.1002/9780470316979](https://doi.org/10.1002/9780470316979)
+
+**What it claims:** The canonical reference for statistics on the circle and sphere: circular distributions (von Mises, wrapped normal, wrapped Cauchy), their moment estimators, and the theory of mean-direction inference.
+
+**Why it matters for this surface:** The reference behind the circular-mean decoder — the construction that lets the toy average wrapped phase without forfeiting the √n gain. Any builder who wants to know why the circular mean works (and when it doesn't) starts here.
+
+---
+
+### Zamir 2010 — *ISIT plenary* — Lattices are everywhere
+
+**Citation:** Zamir, R. "Lattices are everywhere," IEEE Information Theory Workshop / ISIT plenary (2010). [IEEE: 5044976](https://ieeexplore.ieee.org/abstract/document/5044976)
+
+**What it claims:** A tutorial spanning roughly twenty years of lattice research, showing lattice alignment as the unifying mechanism across Gaussian multiterminal settings: dirty paper, multiple access, compute-and-forward, interference alignment.
+
+**Why it matters for this surface:** The intuition-first companion to the 2014 textbook — it explains *why* structured codes keep appearing across settings, which is the conceptual frame the whole lineage rests on. If the textbook is the reference, this is the orientation.
+
+---
+
+### Savkin et al. 2025 — *ICML* — NestQuant (nested lattices, modern use)
+
+**Citation:** Savkin, S. et al. "NestQuant: Nested Lattice Quantization for Matrix Products and LLMs." ICML 2025. [arXiv:2502.09720](https://arxiv.org/abs/2502.09720)
+
+**What it claims:** A post-training quantization scheme for LLM weights and activations based on self-similar nested lattices with dithered quantization — the same nested-lattice-plus-dither construction as the RF tier, applied to model compression.
+
+**Why it matters for this surface:** Proof that the construction in `lattice.py` is not a historical curiosity confined to information theory: the same nested-lattice + dither machinery is live in 2025 machine learning. It is also the closest maintained open-source code to this project's lattice machinery (adjacent to, but not the same as, coefficient selection).
+
+---
+
+### amazon-science/LatticeAlgorithms.jl — Adjacent open-source implementation
+
+**Citation:** [github.com/amazon-science/LatticeAlgorithms.jl](https://github.com/amazon-science/LatticeAlgorithms.jl) — lattice algorithms used in "Closest lattice point decoding for multimode Gottesman-Kitaev-Preskill codes."
+
+**What it claims / provides:** Maintained Julia code for closest-lattice-point decoding and related lattice problems — not compute-and-forward, but the same underlying lattice-decision machinery.
+
+**Why it matters for this surface:** This is what a live scan (2026-09) found as the closest open-source code to compute-and-forward: there is **no maintained reference implementation of compute-and-forward coefficient selection** in any language. That absence is a named contribution target — see `docs/hello-world-fading-coefficients.md` and `CONTRIBUTING.md`.
 
 ---
 
@@ -209,12 +349,21 @@ If you're new to the field and want to read your way in, here's a cross-lineage 
 7. **Nature Communications 2025** (arXiv:2301.02850) — the SOTA: a programmable RF metastructure solving equations
 8. **Chegini, Guan & Yao 2025** (JLT) — the SOTA of microwave photonic NN
 
+### Phase 3b — The lattice machinery (2 hours, optional but recommended)
+
+This is the computational-core path, for readers who want to understand `rf_compute/lattice.py` and `rf_compute/coefficients.py` — not just use them.
+
+9. **Erez & Zamir 2004** (IEEE TIT) — dithered lattice coding: the construction everything else builds on
+10. **Liu & Ling 2016** (IEEE TWC) — coefficient selection done efficiently; also the pointer to the complex-channel setting
+11. **Sahraei & Gastpar 2014** (Allerton) — the exact polynomial algorithm for the selection problem (arXiv:1410.3656)
+12. **Zamir 2014** (Cambridge) — the textbook, for the full picture
+
 ### Phase 4 — The context (1 hour)
 
-9. **Marrows 2024** (Nature) — the 2024 status of spin-torque neuromorphic
-10. **Lightmatter press** (vendor) — the commercial frontier (with appropriate skepticism)
+13. **Marrows 2024** (Nature) — the 2024 status of spin-torque neuromorphic
+14. **Lightmatter press** (vendor) — the commercial frontier (with appropriate skepticism)
 
-After Phase 1 you have the vocabulary. After Phase 2 you have the four-lineage map. After Phase 3 you know where the frontier is. After Phase 4 you know who's trying to commercialize it.
+After Phase 1 you have the vocabulary. After Phase 2 you have the four-lineage map. After Phase 3 you know where the frontier is. After Phase 3b you have the lattice machinery under you. After Phase 4 you know who's trying to commercialize it.
 
 Then run the hello-world ladder.
 
@@ -233,3 +382,4 @@ Then run the hello-world ladder.
 
 - **Research method:** AnySearch MCP, 2026-07-31
 - **Verification:** All citations checked as peer-reviewed unless marked `[preprint]` or `[vendor]`. Lightmatter performance figures are vendor-sourced. AirComp surveys are preprints.
+- **Lattice-lineage entries (Erez & Zamir, Huang & Burr, Liu & Ling, Sahraei & Gastpar, Niesen & Whiting, Philosof et al., Cao et al., Mitsiou et al., Zamir 2010/2014, Greco et al., Mardia & Jupp, Savkin et al.):** added 2026-09-13, each citation verified live against the publisher record (DOI/arXiv) before writing. Two corrections were caught in that pass and applied: arXiv:2111.05719's authors are Cao, Zhu, Xu & Cui (not "Yang et al."), and the Erez & Zamir 2004 DOI is 10.1109/TIT.2004.834787.

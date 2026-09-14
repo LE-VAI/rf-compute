@@ -98,10 +98,19 @@ At matched transmit power and matched per-coordinate SNR:
 
 Toy scope (marked inline): the theory uses high-dimensional random lattice
 ensembles; we use repetition across n coordinates, which already exhibits
-the exponential error decay. The theory optimizes the receiver scaling
-alpha; we fix alpha = 1 (inverted channel) and expose only integer
-coefficients. The 2007 paper computes over FINITE fields; the toy's Z_L is
-the integers mod L, the cleanest finite ring for pedagogy.
+the exponential error decay. The 2007 paper computes over FINITE fields;
+the toy's Z_L is the integers mod L, the cleanest finite ring for pedagogy.
+
+The receiver scaling alpha deserves a precise statement, because "we fix
+alpha = 1" reads like a shortcut and is not: with the integer-aligned
+channel (h_i = a_i) and dithers replayed at those same weights, the
+self-noise term of the effective-noise decomposition (Huang & Burr 2017;
+Erez & Zamir 2004) — sum_i (alpha*h_i - a_i) x_i — vanishes identically at
+alpha = 1, so the decode is exact by construction, not by tuning. The
+theory's MMSE scaling sits slightly BELOW 1 even on a unit-gain channel
+(alpha* = SNR/(1+SNR) for h = a = 1) and buys a real (if modest) rate
+advantage; that regime is what the fading tier is for — see
+coefficients.py, where alpha* and the computation rate it optimizes live.
 
 Module map
 ----------
@@ -111,6 +120,13 @@ Module map
     decode(y, L, dithers, a)   — superposed signal -> integer sum mod L
     run_trial(...)              — one AirComp round, all three schemes
     monte_carlo(...)            — measure the scoreline over many trials
+    fading_trial(...)           — one round on a FADING channel (Tier 1.6)
+    fading_scoreline(...)       — coefficient selection vs fading, measured
+
+All randomness flows through the caller's `rng` (a numpy Generator).
+`channel()` takes the rng too — the physical channel doesn't need one, but
+a simulator that can't repeat a run can't be verified. Same seed, same
+numbers, everywhere.
 """
 
 from __future__ import annotations
@@ -119,6 +135,7 @@ import numpy as np
 
 __all__ = [
     'mod_lattice', 'encode', 'decode', 'channel', 'run_trial', 'monte_carlo',
+    'fading_trial', 'fading_scoreline',
 ]
 
 
@@ -164,7 +181,7 @@ def encode(w, L, n, rng):
     return x, d
 
 
-def channel(xs, L, snr_db, gains=None):
+def channel(xs, L, snr_db, gains=None, rng=None):
     """
     The wave domain: superpose all nodes with channel gains, add AWGN.
 
@@ -172,14 +189,23 @@ def channel(xs, L, snr_db, gains=None):
 
     snr_db is per-node. Each x_i is uniform on a cell of side L, so its
     per-coordinate second moment is L^2/12 — that IS the per-node signal
-    power, and sigma^2 = (L^2/12) / snr.
+    power P, and sigma^2 = P / snr. (This per-user power convention,
+    E[||x||^2] <= nP with SNR = P/sigma^2, is the AirComp literature's
+    standard — Huang & Burr 2017, arXiv:1704.05007.)
 
     With gains=None (default) the Tier 1 channel-inversion pre-coding is
     assumed: h_i = 1 at the receiver. Arbitrary gains model a real channel;
     decode(a=...) then absorbs them into an integer coefficient vector.
+
+    rng: the noise source. Pass a seeded Generator for reproducible runs
+    (the physical channel has no seed, but a SIMULATION whose numbers can't
+    be repeated can't be checked by anyone — reproducibility is the bar
+    this repo holds itself to).
     """
     if not xs:
         raise ValueError("channel needs at least one codeword")
+    if rng is None:
+        rng = np.random.default_rng()
     n = len(xs[0])
     if gains is None:
         gains = [1.0] * len(xs)
@@ -189,7 +215,7 @@ def channel(xs, L, snr_db, gains=None):
     P = (float(L) ** 2) / 12.0          # per-node signal power (uniform cell)
     snr = 10 ** (snr_db / 10)
     sigma = np.sqrt(P / snr)
-    y = y + np.random.default_rng().normal(0.0, sigma, size=n)
+    y = y + rng.normal(0.0, sigma, size=n)
     return y
 
 
@@ -229,9 +255,21 @@ def decode(y, L, dithers, a=None):
       4. round + mod:       s_hat = round(angle·L/2π) mod L
 
     a must be integer-valued (the gains the receiver replays against).
-    Non-integer a needs the theory's alpha optimization and is out of toy
-    scope. With a = all-ones this is the plain sum (Nazer/Gastpar 2007);
-    with integer a it is the compute-and-forward equation (2011).
+    Non-integer a — the real scaling alpha of the full theory — is out of
+    this decoder's scope: with real alpha the residual sum_i (alpha*h_i -
+    a_i) w_i is a data-dependent real offset that a scalar-repetition
+    decode cannot represent. The full theory decodes in R^n with a genuine
+    lattice decoder, where the same residual is the self-noise in the rate
+    formula (implemented in coefficients.py). With a = all-ones this is the
+    plain sum (Nazer/Gastpar 2007); with integer a it is the
+    compute-and-forward equation (2011).
+
+    Estimator note: the circular mean is the exact ML estimator of the mean
+    direction for a von Mises distribution; for the wrapped normal it is
+    the first trigonometric moment — consistent and near-optimal, but not
+    the exact MLE (which needs an EM iteration; Greco, Saraceno &
+    Agostinelli, Stats 4(2) 454-471, 2021). At toy scale, with well-spread
+    wrapped phases, the two agree to within the rounding threshold.
     """
     y = np.asarray(y, dtype=np.float64)
     num_nodes = len(dithers)
@@ -265,6 +303,15 @@ def run_trial(num_nodes=2, L=16, n=32, snr_db=5.0, a=None, rng=None, gains=None)
       analog  — Tier 1 analog superposition + rounding: 1 channel use, estimate
       tdma    — routing baseline: N sequential slots, exact per-slot decode, N uses
 
+    All three transmit at the SAME per-node power P = L^2/12 (the uniform-
+    cell convention). The analog and TDMA baselines transmit their values
+    CENTERED on the cell and scaled to exactly P — the shaping a dithered
+    lattice codeword gets for free. (Transmitting raw uncentered values and
+    rescaling at matched average power costs a factor-2 noise margin; that
+    handicap is real only if you insist on the worst encoding. Here the
+    baselines get their best case, so the comparison measures the
+    CONSTRUCTION, not a strawman.)
+
     Returns per-scheme decoded value, the true value, and exact-match booleans.
     """
     if rng is None:
@@ -280,41 +327,41 @@ def run_trial(num_nodes=2, L=16, n=32, snr_db=5.0, a=None, rng=None, gains=None)
         x, d = encode(int(w), L, n, rng)
         xs.append(x)
         ds.append(d)
-    y = channel(xs, L, snr_db, gains=gains)
+    y = channel(xs, L, snr_db, gains=gains, rng=rng)
     lattice_val = decode(y, L, ds, a=a)
 
-    # ── analog scheme (Tier 1 baseline) ──
-    # Raw-value transmission, scaled to MATCHED average power. The lattice's
-    # dithered codeword is uniform on the cell: power L^2/12 with the full
-    # cell as noise margin. Raw w_i on {0..L-1} has second moment ~L^2/3 —
-    # 4x the power for the same 1-message-unit resolution. Matching power
-    # (scale = 1/2) halves analog's noise margin: the constellation is not
-    # shaped to the cell. This power-shaping gap — plus analog's irreducible
-    # MSE and its inability to represent mod-L arithmetic — is the honest
-    # difference. (The data-dependent power of a raw-value sum is exactly
-    # the "power alignment" problem the field map defers.)
+    # ── shared noise model for the baselines ──
     P = (L ** 2) / 12.0
     snr = 10 ** (snr_db / 10)
     sigma = np.sqrt(P / snr)
-    analog_scale = 0.5                      # matched average power: sqrt((L^2/12)/(L^2/3))
-    # n independent copies of the sum, noise averaged — the analog scheme's
-    # best shot at the same dimensional gain
-    per_coord = float(np.sum(ws)) * analog_scale + rng.normal(0.0, sigma, size=n)
-    est = per_coord.mean() / analog_scale
+
+    # ── analog scheme (Tier 1 baseline) — best case: centered + power-matched ──
+    # Each node transmits its value centered on the cell, scaled so the
+    # per-node power is exactly P, repeated across the n coordinates; the
+    # channel superposes and adds noise; the receiver averages (n-fold noise
+    # reduction — the same dimensional gain the lattice's circular mean
+    # banks), re-centers, and rounds. At matched power this is the strongest
+    # analog reader there is, and what it computes is the plain sum: no
+    # integer-coefficient function class, no hard exactness threshold.
+    center = (L - 1) / 2.0
+    P_raw = (L ** 2 - 1) / 12.0              # E[(w - center)^2], w uniform on Z_L
+    scale = np.sqrt(P / P_raw)               # exact power match (~1.002 at L=16)
+    sum_centered = float(np.sum(ws)) - num_nodes * center
+    per_coord = scale * sum_centered + rng.normal(0.0, sigma, size=n)
+    est = per_coord.mean() / scale + num_nodes * center
     analog_val = int(np.rint(est)) % L
 
     # ── tdma scheme ──
-    # Routing baseline at FULL power shaping: each slot centers its value in
-    # the cell ((w - L/2) has second moment ~L^2/12 — the same shaping the
-    # lattice gets for free from its dither), n repeats averaged per slot,
-    # each message decoded exactly, then summed. This is TDMA's best case:
+    # Routing baseline at the same power shaping: each slot centers its value
+    # ((w - center) scaled to power P), n repeats averaged per slot, each
+    # message decoded exactly, then summed. This is TDMA's best case:
     # per-slot reliability ~ the lattice's, at the cost of N channel uses
     # and an N-way error union. The near-parity at N times the resources IS
     # the Nazer/Gastpar computation-rate result, made visible.
     tdma_val = 0
     for w in ws:
-        slot_tx = (float(w) - L / 2) + rng.normal(0.0, sigma, size=n)
-        est_slot = slot_tx.mean() + L / 2
+        slot_tx = scale * (float(w) - center) + rng.normal(0.0, sigma, size=n)
+        est_slot = slot_tx.mean() / scale + center
         tdma_val += int(np.rint(est_slot))
     tdma_val = int(tdma_val) % L
 
@@ -332,6 +379,11 @@ def monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=2000, seed=42):
     """
     The Tier 1.5 experiment: measure all three schemes over many trials.
 
+    Fully seed-deterministic: every source of randomness (messages, codewords,
+    dithers, channel noise, baseline noise) flows through one seeded
+    Generator. Same seed -> same numbers, bit for bit. (The earlier version
+    drew channel noise from an unseeded generator; that is fixed.)
+
     The honest scoreline, as measured:
       - LATTICE: 1 channel use. Exact sum mod L with error probability p
         that decays exponentially in the dimension n.
@@ -341,10 +393,14 @@ def monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=2000, seed=42):
         lattice's single use. This is the Nazer/Gastpar computation-rate
         result made visible: the sum is decodable at the rate of ONE user
         while all N transmit.
-      - ANALOG (Tier 1): 1 channel use, but strictly worse error at every
-        SNR — raw values are not power-shaped to the cell (a factor-2 noise
-        margin gap at matched power), and a real-valued estimate cannot
-        represent mod-L arithmetic at all.
+      - ANALOG (Tier 1): 1 channel use, best-case encoding (centered,
+        power-matched). It computes the plain sum and, at matched power and
+        enough dimension, tracks the lattice closely — the single-user rate
+        is the ceiling for BOTH, which IS the theorem (computation rate
+        <= single-user rate). The lattice's genuine edges over analog: the
+        integer-coefficient function class, the hard exactness threshold,
+        the structural privacy, and robustness when the channel is NOT
+        aligned (see fading_scoreline).
       - PRIVACY (not in the numbers): the lattice receiver recovers ONLY
         sum w_i mod L — individual messages are structurally absent, not
         masked. Analog transmits raw values; TDMA decodes every message.
@@ -362,4 +418,144 @@ def monte_carlo(num_nodes=2, L=16, n=32, snr_db=5.0, trials=2000, seed=42):
         'lattice': {'error_rate': lat_err / trials, 'channel_uses_per_trial': 1},
         'analog': {'error_rate': ana_err / trials, 'channel_uses_per_trial': 1},
         'tdma': {'error_rate': tdma_err / trials, 'channel_uses_per_trial': num_nodes},
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tier 1.6 — the FADING channel: coefficients must be selected, not set
+# ─────────────────────────────────────────────────────────────────────────────
+
+def fading_trial(num_nodes=2, L=16, n=32, snr_db=5.0, rng=None,
+                 selection="exhaustive"):
+    """
+    ONE round on a FADING channel — the Tier 1.6 experiment.
+
+    Tier 1.5 sets h_i = a_i (integer-aligned gains). A real channel draws
+    h_i ~ N(0, 1) and the receiver must CHOOSE the integer combination it
+    wants to decode — maximizing the computation rate over a (the theory:
+    Nazer & Gastpar 2011; the algorithms: rf_compute.coefficients).
+
+    Honest mechanics of this toy: it pre-codes per node (node i transmits
+    (a_i/h_i)·x_i), which makes the effective channel integer-aligned again
+    — so BOTH strategies decode exactly with high probability, and the
+    fading does not show up as decode error. What it changes is:
+
+      1. THE ACHIEVED COMPUTATION RATE. The rate formula
+         R(h, a) = 1/2 log2(1 / (alpha^2/SNR + ||alpha h - a||^2))
+         (Huang & Burr 2017) is what the selection maximizes. The plain
+         sum a = 1 vector has rate 0 whenever the fading misaligns it
+         (h^T·1 <= 0, or the self-noise ||alpha h - 1||^2 >= 1). Selection
+         picks a vector with rate > 0. THIS is the fading-channel win:
+         not fewer errors in the inverted toy, but a decodable equation
+         where the naive one is not decodable at all.
+      2. THE INVERSION POWER COST. Node i burns (a_i/h_i)^2 · P to invert
+         its fade. Deep fades are paid in watts — and selection can DROP a
+         node (a_i = 0) instead of paying for it. The toy's real-α path
+         (no inversion, receiver-side scaling) needs the R^n lattice
+         decoder the theory actually uses; the scalar-repetition decoder
+         here requires integer effective gains, so inversion is the honest
+         way to keep the algebra exact at toy scale.
+
+    Returns both strategies' decoded values and ground truth, the selected
+    coefficients and achieved rate, the plain sum's rate through the SAME
+    formula, and each strategy's inversion power factor (sum (a_i/h_i)^2
+    normalized by the N · 1.0 baseline — 1.0 means no fading penalty).
+    """
+    from . import coefficients as _coef
+    if rng is None:
+        rng = np.random.default_rng()
+
+    h = _coef.fading_gains(num_nodes, rng)
+    ws = rng.integers(0, L, size=num_nodes)
+    h_safe = np.where(np.abs(h) < 1e-12, 1e-12, h)
+
+    a_sel, rate_sel = _coef.select_coefficients(h, snr_db, method=selection)
+    rate_plain = _coef.computation_rate(h, np.ones(num_nodes), snr_db)
+
+    results = {}
+    for mode, a in (('selected', a_sel), ('plain', np.ones(num_nodes, dtype=int))):
+        a_f = np.asarray(a, dtype=float)
+        true_val = int(np.sum(a_f * ws) % L)
+        xs, ds = [], []
+        for w, ai, hi in zip(ws, a_f, h_safe):
+            x, d = encode(int(w), L, n, rng)
+            xs.append((ai / hi) * x)     # pre-code: the channel, at gain h_i, delivers a_i·x_i
+            ds.append(d)
+        y = channel(xs, L, snr_db, gains=h_safe, rng=rng)   # the fading the pre-code inverts
+        val = decode(y, L, ds, a=a_f)
+        power_factor = float(np.sum((a_f / h_safe) ** 2) / num_nodes)
+        results[mode] = {
+            'value': val,
+            'true': true_val,
+            'exact': val == true_val,
+            'coefficients': [int(x) for x in a],
+            'power_factor': power_factor,
+        }
+
+    return {
+        'gains': [float(x) for x in h],
+        'messages': [int(w) for w in ws],
+        'selected': dict(results['selected'], rate=rate_sel),
+        'plain': dict(results['plain'], rate=rate_plain),
+        'selection_method': selection,
+        'snr_db': snr_db,
+        'channel_uses': 1,
+        'deep_fades': int(np.sum(np.abs(h) < 0.2)),
+    }
+
+
+def fading_scoreline(num_nodes=3, L=16, n=32, snr_db=5.0, trials=800, seed=11,
+                     selection="exhaustive"):
+    """
+    The Tier 1.6 measurement over many independent fading realizations.
+
+    Reports, per strategy: decode error rate (the same ~30% toy decode
+    threshold in both — see fading_trial), achieved computation rate, and
+    the inversion power factor (mean AND median; the mean is dominated by
+    rare deep fades, the median is the typical cost). Plus the fraction of
+    channels where selection returned the plain sum (a == 1 vector is
+    sometimes the right answer — selection is earned, not assumed) and the
+    fraction where the plain sum's rate was zero (undecodable in a real,
+    non-inverted system).
+    """
+    rng = np.random.default_rng(seed)
+    sel_err = plain_err = 0
+    rates_sel, rates_plain = [], []
+    pf_sel, pf_plain = [], []
+    plain_selected = 0
+    plain_rate_zero = 0
+    for _ in range(trials):
+        t = fading_trial(num_nodes=num_nodes, L=L, n=n, snr_db=snr_db,
+                         rng=rng, selection=selection)
+        sel_err += not t['selected']['exact']
+        plain_err += not t['plain']['exact']
+        rates_sel.append(t['selected']['rate'])
+        rates_plain.append(t['plain']['rate'])
+        pf_sel.append(t['selected']['power_factor'])
+        pf_plain.append(t['plain']['power_factor'])
+        if t['selected']['coefficients'] == [1] * num_nodes:
+            plain_selected += 1
+        if t['plain']['rate'] <= 0:
+            plain_rate_zero += 1
+    return {
+        'trials': trials,
+        'snr_db': snr_db,
+        'num_nodes': num_nodes,
+        'selection_method': selection,
+        'selected': {
+            'error_rate': sel_err / trials,
+            'mean_rate_bits': float(np.mean(rates_sel)),
+            'mean_power_factor': float(np.mean(pf_sel)),
+            'median_power_factor': float(np.median(pf_sel)),
+            'channel_uses_per_trial': 1,
+        },
+        'plain': {
+            'error_rate': plain_err / trials,
+            'mean_rate_bits': float(np.mean(rates_plain)),
+            'mean_power_factor': float(np.mean(pf_plain)),
+            'median_power_factor': float(np.median(pf_plain)),
+            'channel_uses_per_trial': 1,
+        },
+        'plain_was_optimal_fraction': plain_selected / trials,
+        'plain_rate_zero_fraction': plain_rate_zero / trials,
     }

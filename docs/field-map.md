@@ -88,11 +88,12 @@ aircomp_kernel(signals, function="sum"):
     # no per-device demodulation — interference is the operation
 ```
 
-**Implemented at two levels:**
+**Implemented at three levels:**
 - **Tier 1 — analog superposition** (`docs/hello-world-aircomp.md`): the receiver reads a real-valued sum estimate. $0 in simulation; ~$350 clone-tier / ~$725 official over the air.
 - **Tier 1.5 — nested-lattice coded** (`docs/hello-world-lattice-aircomp.md`, `rf_compute/lattice.py`): the full Nazer/Gastpar construction at toy scale — exact integer sums mod L from one noisy channel use, compute-and-forward coefficients as channel gains, error decaying exponentially in the lattice dimension, individual messages structurally absent at the receiver. Free (NumPy only).
+- **Tier 1.6 — fading-channel coefficients** (`docs/hello-world-fading-coefficients.md`, `rf_compute/coefficients.py`): the selection problem — computation-rate maximization over the integer coefficient vector, MMSE α, the Nazer/Gastpar norm-bound exhaustive search, and LLL reduction. The honest finding: the plain sum is undecodable (rate zero) on ~95% of fading realizations; selection finds a decodable equation and drops faded nodes instead of paying to invert them. Free (NumPy only).
 
-**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; next checkpoint is the September 2026 RAN plenary). For the lattice tier specifically: fading-channel coefficient selection (lattice reduction), random-lattice ensembles beyond the repetition code, and the SDR sync/dither-seed-sharing deltas.
+**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; next checkpoint is the September 2026 RAN plenary). For the lattice tiers specifically: an un-inverted receiver (real α < 1 with an R^n lattice decoder — the toys invert the channel to keep the scalar decoder exact), complex fading with Gaussian-integer lattices, random-lattice ensembles beyond the repetition code, the exact polynomial selection algorithm of Sahraei & Gastpar 2014 (no OSS implementation exists), and the SDR sync/dither-seed-sharing deltas.
 
 **Currency note (verified 2026-08-31):** The deferral boundary above holds verbatim. In-window literature is dense and converging on this project's thesis: arXiv:2608.13353 (Aug 13 2026) uses microwave linear analog computers to aid AirComp beamforming — the first direct computational-metamaterials × AirComp crossover, the two lineages this map holds apart fusing in the literature. arXiv:2607.16360 (EML-AirComp) extends AirComp beyond sum/mean toward general nomographic function trees via a single reusable exp-minus-log gate. arXiv:2607.22509 (MiLAC, Nerini & Clerckx, July 24 2026) formally names RF-domain linear algebra as a communications subfield — matrix inversion at quadratic rather than cubic complexity scaling.
 
@@ -175,7 +176,7 @@ SDR is the bridge because it's the one platform where a builder can touch RF wav
 
 ## The "Hello World" Ladder
 
-Four reproducible experiments, escalating in cost and complexity. Each maps to a peer-reviewed result.
+Five reproducible experiments, escalating in cost and complexity. Each maps to a peer-reviewed result.
 
 ### Tier 1 — AirComp Sum (the Nazer/Gastpar 2007 result, made legible)
 
@@ -198,6 +199,17 @@ Four reproducible experiments, escalating in cost and complexity. Each maps to a
 | **Citation** | Nazer & Gastpar, *IEEE Trans. Inf. Theory* 53(10) 3498 (2007); 57(10) 6463 (2011), DOI 10.1109/TIT.2011.2165816; dithered coding per Erez & Zamir (2004) |
 | **Difficulty** | Beginner — one kernel call; the walkthrough makes the algebra legible |
 | **Walkthrough** | `docs/hello-world-lattice-aircomp.md` · module `rf_compute/lattice.py` · example `examples/tier1_5_lattice_aircomp_kernel.py` |
+
+### Tier 1.6 — Fading-Channel Coefficient Selection (the selection problem, toy scale)
+
+| Field | Value |
+|---|---|
+| **Cost** | Free — pure simulation, NumPy only. |
+| **What it proves** | On a fading channel the receiver must CHOOSE which integer combination to decode. The computation rate R(h, a) is closed-form; maximizing it over a is a shortest-lattice-vector problem. The plain sum (a = 1 vector) has rate ZERO on ~95% of fading realizations — it is undecodable, not merely worse. Selection finds a decodable equation and drops faded nodes (aᵢ = 0) instead of paying to invert them. |
+| **The lesson** | Coefficients are earned, not given. Rounding α·h is a heuristic; on h = [1,2] the optimum drops a node entirely. The MMSE scaling α* = SNR·hᵀa/(1+SNR‖h‖²) sits below 1 even on a unit-gain channel — perfect integer alignment is impossible for N ≥ 2. |
+| **Citation** | Nazer & Gastpar, *IEEE TIT* 57(10) 6463 (2011, rate theorem + norm bound); Sahraei & Gastpar, Allerton 2014 (arXiv:1410.3656, exact polynomial); Liu & Ling, *IEEE TWC* 15(12) 8039 (2016, efficient search); Huang & Burr, arXiv:1704.05007 (MMSE α, rate formula) |
+| **Difficulty** | Intermediate — the walkthrough derives the rate formula and the SLV reduction; the code is one call |
+| **Walkthrough** | `docs/hello-world-fading-coefficients.md` · module `rf_compute/coefficients.py` · example `examples/tier1_6_fading_coefficients.py` |
 
 ### Tier 2 — Wave-Domain Convolution / Filtering
 
