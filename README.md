@@ -1,5 +1,13 @@
 # rf-compute
 
+<p align="center">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/media/hero-poster.png">
+    <img src="docs/media/hero-loop.webp" width="800" alt="Two carrier waves travel across the frame. Carrier A completes one cycle per loop and carrier B completes two. The bottom lane shows their sum, sampled as orange stems: the interference is the operation.">
+  </picture>
+</p>
+<p align="center"><sub>A 4-second loop. It plays once and rests, and shows a still frame if you prefer reduced motion. <a href="docs/media/hero-loop.mp4">Watch it on repeat</a>.</sub></p>
+
 **Radio Frequency as a computational substrate — not a transmission medium.**
 
 A research-and-education surface for wave-domain computation. The waveform is the operand. Interference isn't noise to cancel — it's the multiply-accumulate operation. The medium is the math.
