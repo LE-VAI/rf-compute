@@ -1,12 +1,14 @@
 # rf-compute
 
+<!-- vai-hero:start -->
 <p align="center">
   <picture>
     <source media="(prefers-reduced-motion: reduce)" srcset="docs/media/hero-poster.png">
     <img src="docs/media/hero-loop.webp" width="800" alt="Two carrier waves travel across the frame. Carrier A completes one cycle per loop and carrier B completes two. The bottom lane shows their sum, sampled as orange stems: the interference is the operation.">
   </picture>
 </p>
-<p align="center"><sub>A 4-second loop. It plays once and rests, and shows a still frame if you prefer reduced motion. <a href="https://raw.githubusercontent.com/LE-VAI/rf-compute/main/docs/media/hero-loop-repeat.webp">Watch it on repeat</a>.</sub></p>
+<p align="center"><sub>A 4-second loop. It plays once and rests, and shows a still frame if you prefer reduced motion. <a href="https://le-vai.github.io/LE-VAI/loops/#rf-compute">Watch it on repeat</a>.</sub></p>
+<!-- vai-hero:end -->
 
 **Radio Frequency as a computational substrate — not a transmission medium.**
 
