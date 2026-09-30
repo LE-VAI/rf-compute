@@ -154,6 +154,17 @@ class TestTier3Inversion:
         with pytest.warns(UserWarning, match="will diverge"):
             InversionOperator(matrix=A, step_size=3.0)  # 3.0 > 2.22, should warn
 
+    def test_large_spectral_radius_with_small_step_does_not_warn(self, sim_kernel):
+        """rho(A) >= 1 is not a divergence condition; rho(I - alpha*A) is.
+
+        A = 2I with alpha = 0.5 gives I - alpha*A = 0: one-step convergence.
+        """
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            op = InversionOperator(matrix=2 * np.eye(2), step_size=0.5)
+        assert sim_kernel.solve(op, target=np.array([1.0, 1.0]))['converged']
+
     def test_solve_only_for_inversion(self, sim_kernel):
         """solve() is only defined for InversionOperator — others must raise."""
         op = AirCompOperator(num_nodes=2)
@@ -179,6 +190,25 @@ class TestReservoir:
         x = np.array([100.0])  # large input — tanh should saturate
         state = sim_kernel.apply(op, inputs=x)
         assert np.all(np.abs(state) <= 1.0 + 1e-6), "tanh state should be in [-1, 1]"
+
+    def test_spectral_radius_shapes_the_dynamics(self, sim_kernel):
+        """spectral_radius drives the recurrence (it was once dead code)."""
+        x = np.sin(np.linspace(0, 6, 50))
+        s_short = sim_kernel.apply(ReservoirOperator(spectral_radius=0.1), inputs=x)
+        s_long = sim_kernel.apply(ReservoirOperator(spectral_radius=0.95), inputs=x)
+        assert not np.allclose(s_short, s_long)
+
+    def test_reservoir_has_fading_memory(self, sim_kernel):
+        """An early impulse echoes longer at a larger spectral radius."""
+        impulse = np.zeros(20)
+        impulse[0] = 1.0
+        silent = np.zeros(20)
+
+        def echo(rho):
+            op = ReservoirOperator(reservoir_size=100, spectral_radius=rho)
+            return np.linalg.norm(sim_kernel.apply(op, inputs=impulse)
+                                  - sim_kernel.apply(op, inputs=silent))
+        assert echo(0.95) > 10 * echo(0.3)
 
     def test_unsupported_nonlinearity_raises(self):
         """Only tanh and sigmoid are supported."""
@@ -230,6 +260,20 @@ class TestNamedOperators:
         op = matched(template)
         expected = np.conj(template[::-1])
         np.testing.assert_array_almost_equal(op.impulse_response, expected)
+
+    @pytest.mark.parametrize("N", [63, 64])
+    def test_hilbert_has_unit_passband_gain(self, N):
+        """A Hilbert transformer passes every in-band frequency at gain 1.
+
+        The ideal taps are 2/(pi*m) for odd m and exactly 0 for even m;
+        filling the even taps too swings the gain between ~0.25 and ~1.75.
+        """
+        h = hilbert(N=N).impulse_response.real
+        m = np.arange(N) - N // 2
+        assert np.allclose(h[m % 2 == 0], 0.0)
+        H = np.abs(np.fft.fft(h, 4096))
+        band = H[4096 // 16: 4096 // 2 - 4096 // 16]   # 0.06 to 0.44 cycles/sample
+        assert band.min() > 0.97 and band.max() < 1.03, (band.min(), band.max())
 
     def test_hilbert_center_is_zero(self):
         """hilbert(N) center coefficient is zero (no divide-by-zero, fixed bug)."""

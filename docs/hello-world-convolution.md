@@ -126,9 +126,10 @@ def matched(template):
 
 def hilbert(N):
     """Hilbert transform — analytic-signal operator (phase extraction)."""
-    n = np.arange(N)
-    h = 2 / (np.pi * (n - N//2))
-    h[N//2] = 0
+    m = np.arange(N) - N//2
+    h = np.zeros(N)
+    odd = m % 2 != 0                   # even taps (and the center) are exactly zero
+    h[odd] = 2 / (np.pi * m[odd])
     return h * np.hamming(N)  # window to tame ringing
 
 # Pick one:
@@ -283,7 +284,7 @@ print("(1.0 = perfect, >0.9 = strong, >0.7 = acceptable, <0.5 = investigate)")
 | **Boxcar** | `[1/N]×N` | Moving average (low-pass) | Smoothing is wave-native |
 | **Differencer** | `[1, −1]` | First difference (high-pass / differentiation) | Differentiation is wave-native — this is the Silva 2014 operation |
 | **Matched** | `conj(template[::-1])` | Correlation with a template | Template matching is wave-native — radar/sonar basis |
-| **Hilbert** | `2/(π·(n−N/2))` | Analytic signal (phase extraction) | Phase transforms are wave-native — SSB modulation basis |
+| **Hilbert** | `2/(π·m)` for odd `m = n−N/2`, `0` for even `m` | Analytic signal (phase extraction) | Phase transforms are wave-native — SSB modulation basis |
 
 The point: **each of these is a different mathematical operation, and the wave domain performs all of them the same way — by convolution.** You don't write a different algorithm for each; you change `h[n]`. This is the power of wave-based computing: one physical mechanism (convolution) implements an entire class of linear operators.
 

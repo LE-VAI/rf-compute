@@ -13,7 +13,7 @@ from rf_compute import InversionOperator, WaveComputeKernel
 
 kernel = WaveComputeKernel(backend="sim")
 
-# The operator: a stable 2x2 matrix (spectral radius < 1)
+# The operator: a 2x2 matrix with eigenvalues 0.9 and 0.6, so alpha = 0.5 < 2/0.9 converges
 A = np.array([[0.8, 0.2],
               [0.1, 0.7]])
 op = InversionOperator(matrix=A, step_size=0.5, max_iters=50)

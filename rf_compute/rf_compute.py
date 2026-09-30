@@ -214,31 +214,33 @@ class InversionOperator(Operator):
     does the multiply A·x; closed-loop does the inversion A⁻¹·b. The wave
     domain settles to the solution; computation time = settling time.
 
-    Maps to: Nature Communications (2025), arXiv:2301.02850.
+    Convergence: the iteration matrix is (I - alpha*A), so the loop settles
+    iff its spectral radius rho(I - alpha*A) < 1. For A with real positive
+    eigenvalues that is 0 < alpha < 2/lambda_max(A). A's own spectral radius
+    is not the condition — A = 2I with alpha = 0.5 converges in one step.
+
+    Maps to: Tzarouchis, Edwards & Engheta, Nature Communications 16, 908
+    (2025), DOI 10.1038/s41467-025-56019-1, arXiv:2301.02850.
     Walkthrough: docs/hello-world-matrix-inversion.md
     """
     matrix: np.ndarray = field(default_factory=lambda: np.array([[0.8, 0.2], [0.1, 0.7]]))
-    step_size: float = 0.5   # alpha; must satisfy 0 < alpha < 2/lambda_max(A)
+    step_size: float = 0.5   # alpha; converges iff rho(I - alpha*A) < 1
     max_iters: int = 50
     lineage: str = "inversion"
 
     def __post_init__(self):
         self.matrix = np.asarray(self.matrix, dtype=np.float64)
-        # Stability check — warn (don't fail) so builders can experiment
-        eigs = np.linalg.eigvals(self.matrix)
-        spectral_radius = np.max(np.abs(eigs))
-        if spectral_radius >= 1.0:
+        # Stability check — warn (don't fail) so builders can experiment.
+        # Richardson converges iff rho(I - alpha*A) < 1.
+        n = self.matrix.shape[0]
+        iteration = np.eye(n) - self.step_size * self.matrix
+        rho = float(np.max(np.abs(np.linalg.eigvals(iteration))))
+        if rho >= 1.0:
             import warnings
             warnings.warn(
-                f"Matrix spectral radius {spectral_radius:.3f} >= 1.0. "
-                f"Richardson iteration may diverge. Normalize the matrix by its "
-                f"largest eigenvalue for stable convergence."
-            )
-        if self.step_size >= 2.0 / spectral_radius:
-            import warnings
-            warnings.warn(
-                f"step_size {self.step_size} >= 2/lambda_max ({2.0/spectral_radius:.3f}). "
-                f"Iteration will diverge. Reduce step_size."
+                f"rho(I - step_size*A) = {rho:.3f} >= 1.0 with step_size "
+                f"{self.step_size}. Iteration will diverge (or stall). For A "
+                f"with real positive eigenvalues, use 0 < step_size < 2/lambda_max(A)."
             )
 
 
@@ -319,8 +321,8 @@ class WaveComputeKernel:
 
         For AirCompOperator:    inputs is a list of N scalar values; returns the sum.
         For ConvolutionOperator: inputs is a 1-D signal array; returns x * h.
-        For ReservoirOperator:  inputs is a 1-D signal array; returns the
-                                high-dimensional reservoir state.
+        For ReservoirOperator:  inputs is a 1-D signal (one sample per time
+                                step); returns the final reservoir state.
         For InversionOperator:  apply does the open-loop multiply A·x (not the
                                 inversion — use solve() for that).
         """
@@ -501,21 +503,25 @@ class WaveComputeKernel:
         dynamics (magnetization precession) that this linear-nonlinear
         approximation doesn't capture.
         """
-        x = np.asarray(inputs, dtype=np.float64)
+        x = np.atleast_1d(np.asarray(inputs, dtype=np.float64))
         # Build a random reservoir matrix with target spectral radius
         rng = np.random.default_rng(42)  # deterministic for reproducibility
         N = op.reservoir_size
         W = rng.standard_normal((N, N))
         eigs = np.linalg.eigvals(W)
         W = W * (op.spectral_radius / np.max(np.abs(eigs)))
-        # Input weight matrix
-        W_in = rng.standard_normal((N, len(x))) * 0.1
-        # Reservoir state update (one step — the simulation is a snapshot)
-        state = W_in @ x
+        # Input weights: one scalar input per time step
+        W_in = rng.standard_normal(N) * 0.1
         if op.nonlinearity == "tanh":
-            state = np.tanh(state)
-        elif op.nonlinearity == "sigmoid":
-            state = 1.0 / (1.0 + np.exp(-state))
+            f = np.tanh
+        else:
+            f = lambda s: 1.0 / (1.0 + np.exp(-s))
+        # Echo-state recurrence driven by the input sequence:
+        #   state_t = f(W @ state_{t-1} + W_in * u_t)
+        # spectral_radius sets the fading memory — how long past inputs echo.
+        state = np.zeros(N)
+        for u in x:
+            state = f(W @ state + W_in * u)
         return state
 
     # ─── Inversion (Lineage 1, closed-loop) ───────────────────────────────
@@ -578,13 +584,13 @@ def matched(template: np.ndarray) -> ConvolutionOperator:
 
 def hilbert(N: int = 64) -> ConvolutionOperator:
     """Hilbert transform — analytic-signal operator (phase extraction; SSB basis)."""
-    n = np.arange(N)
-    # Avoid divide-by-zero at the center sample (n = N//2) — set it to 0
-    # before the division, then explicitly zero it after (the ideal Hilbert
-    # transform has value 0 at the center index).
-    denom = np.where(n == N // 2, 1.0, n - N // 2)  # placeholder 1.0 avoids div-by-zero
-    h = 2.0 / (np.pi * denom)
-    h[N // 2] = 0
+    # Ideal discrete Hilbert transformer: h[m] = 2/(pi*m) for odd m, 0 for
+    # even m (including the center, m = 0). Filling the even taps too gives
+    # a filter whose passband gain swings between ~0.25 and ~1.75.
+    m = np.arange(N) - N // 2
+    odd = (m % 2) != 0
+    h = np.zeros(N)
+    h[odd] = 2.0 / (np.pi * m[odd])
     h = h * np.hamming(N)
     return ConvolutionOperator(impulse_response=h, notes="Hilbert transform")
 

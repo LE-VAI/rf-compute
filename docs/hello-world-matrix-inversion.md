@@ -155,8 +155,8 @@ This mode teaches the iteration. Run it first, even if you have hardware — it 
 import numpy as np
 import matplotlib.pyplot as plt
 
-# The operator A (must be stable: eigenvalues inside unit circle for convergence)
-# Use a well-conditioned matrix with spectral radius < 1
+# The operator A. The loop converges iff rho(I - alpha*A) < 1;
+# for A with real positive eigenvalues that means 0 < alpha < 2/lambda_max(A)
 A = np.array([[0.8, 0.2],
               [0.1, 0.7]])
 
@@ -167,7 +167,7 @@ print(f"Target: solve A·x = b, where b = {b}")
 print(f"True solution: x = {x_true}")
 
 # Richardson iteration (this is what the wave-domain feedback loop implements)
-alpha = 0.5  # step size (loop gain). Must satisfy 0 < alpha < 2/lambda_max(A)
+alpha = 0.5  # step size (loop gain). Converges iff rho(I - alpha*A) < 1
 x = np.zeros(2)  # initial guess
 history = [x.copy()]
 errors = [np.linalg.norm(x - x_true)]
