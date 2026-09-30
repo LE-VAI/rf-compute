@@ -6,7 +6,7 @@
 
 Tier 1 proved the channel is an adder. Tier 2 proved the channel is a linear operator. Tier 3 proves something deeper: **the channel can solve equations.** A linear system `Ax = b` is solved when the feedback loop drives the error to zero; the wave domain finds `x` the same way an op-amp circuit finds its operating point — by settling, not by iterating.
 
-This maps to the SOTA result in the field: "Programmable wave-based analog computing metastructure," *Nature Communications* (2025), arXiv:2301.02850.
+This maps to the SOTA result in the field: Tzarouchis, Edwards & Engheta, "Programmable wave-based analog computing machine: a metastructure that designs metastructures," *Nature Communications* 16, 908 (2025), [DOI 10.1038/s41467-025-56019-1](https://doi.org/10.1038/s41467-025-56019-1), arXiv:2301.02850.
 
 ---
 
@@ -402,7 +402,7 @@ Same as Tiers 1 and 2: ISM bands only, keep power low. **Mode C additional cauti
 
 ## Provenance
 
-- **Maps to:** "Programmable wave-based analog computing metastructure," *Nature Communications* (2025). [arXiv:2301.02850](https://arxiv.org/abs/2301.02850)
+- **Maps to:** Tzarouchis, Edwards & Engheta, "Programmable wave-based analog computing machine: a metastructure that designs metastructures," *Nature Communications* 16, 908 (2025), [DOI 10.1038/s41467-025-56019-1](https://doi.org/10.1038/s41467-025-56019-1). [arXiv:2301.02850](https://arxiv.org/abs/2301.02850)
 - **Iteration theory:** Richardson, "The approximate arithmetical solution by finite differences of dynamical meteorology problems," (1910) — the iteration this loop implements.
 - **Closed-loop analog compute precedent:** Mohammadi Estakhri, Edwards & Engheta, "Inverse-designed metastructures that solve equations," *Science* 363, 1333–1338 (2019). Penn.
 - **Honest scope:** This walkthrough demonstrates the *principle* of wave-domain equation solving via feedback, at three levels of fidelity. None of the three modes reproduces the Nature Comms 2025 metastructure hardware. Mode A is pure simulation; Mode B closes the loop in software; Mode C closes it in analog hardware but uses an SDR + FIR filter instead of voltage-controlled phase shifter multiplier modules. The gap from this bench demo to the paper's 0.005-error programmable metastructure is the field's open frontier, not this surface's deliverable.

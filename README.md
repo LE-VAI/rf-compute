@@ -126,7 +126,7 @@ If you read one document, read the field map.
 
 ## Hardware you'll need
 
-Prices verified 2026-08-31. HackRF One official retail is ~$340 (SparkFun/Adafruit have retired the unit; GSG's successor **HackRF Pro** is ~$400). AliExpress clones run ~$100–150 but degrade above 1 GHz per Great Scott Gadgets' own clone test — fine for sub-GHz learning experiments, not for precision work. RTL-SDR Blog V4 is end-of-line (May 2026); current official units are the V3 or V4L at ~$35–40.
+Prices verified 2026-08-31, re-checked 2026-09-30. HackRF One official retail is ~$340 (SparkFun/Adafruit have retired the unit; GSG's successor **HackRF Pro** is ~$400). AliExpress clones run ~$100–150 but degrade above 1 GHz per Great Scott Gadgets' own clone test — fine for sub-GHz learning experiments, not for precision work. RTL-SDR Blog V4 is end-of-line (May 2026); current official units are the V3 or V4L at ~$35–40 (the V4L is itself a limited edition with roughly a year of chip stock).
 
 | Item | Tier 1 | Tier 2 | Tier 3 (Mode B/C) | Official | Clone-tier |
 |---|:---:|:---:|:---:|---|---|
@@ -163,7 +163,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 | Torrejon et al., "Neuromorphic computing with spintronic oscillators," *Nature* | 2017 | Microwave nano-oscillators as neurons. 99.6% spoken-digit. |
 | Zangeneh-Nejad et al., "Analogue computing with metamaterials," *Nature Reviews Materials* | 2021 | The canonical review. "Wave-based analog computing." |
 | Li et al., "Performing calculus with ENZ metamaterials," *Science Advances* | 2022 | Differentiation + integration in the material. |
-| "Programmable wave-based analog computing metastructure," *Nature Communications* | 2025 | **The SOTA.** Matrix inversion, Newton's method, Lagrangian optimization at 45 MHz. |
+| Tzarouchis, Edwards & Engheta, "Programmable wave-based analog computing machine: a metastructure that designs metastructures," *Nature Communications* 16, 908 ([DOI](https://doi.org/10.1038/s41467-025-56019-1)) | 2025 | **The SOTA.** Matrix inversion, Newton's method, Lagrangian optimization at 45 MHz. |
 | Chegini, Guan & Yao, "Microwave photonic neural network," *J. Lightwave Technology* | 2025 | RF photonic MVM. 55×10⁶ MAC/s. |
 
 📖 **Annotated bibliography:** [`docs/bibliography.md`](docs/bibliography.md) — every citation, reading order, how to use it

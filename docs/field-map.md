@@ -2,9 +2,9 @@
 
 ## A research-and-education surface for wave-domain computation
 
-**Date:** 2026-07-31 · currency sweep 2026-08-31
-**Status:** Spine draft — determines whether the public GitHub preview has real structure or is vibes. All anchors and deferral boundaries re-verified 2026-08-31; no SOTA displacement in any lineage.
-**Provenance:** Synthesized from multi-source academic search via live web search (AnySearch), conducted 2026-07-31; currency sweep 2026-08-31 via the same method. All citations are peer-reviewed unless marked `[preprint]` or `[vendor]`.
+**Date:** 2026-07-31 · currency sweeps 2026-08-31, 2026-09-30
+**Status:** Spine document. All anchors and deferral boundaries re-verified 2026-08-31 and 2026-09-30; no SOTA displacement in any lineage.
+**Provenance:** Synthesized from multi-source academic search via live web search (AnySearch), conducted 2026-07-31; currency sweeps 2026-08-31 and 2026-09-30 via the same method. All citations are peer-reviewed unless marked `[preprint]` or `[vendor]`.
 
 ---
 
@@ -19,7 +19,7 @@
 
 The unifying claim across all four: **the waveform is the operand.** Interference isn't noise to cancel — it's the multiply-accumulate operation. The medium is the math.
 
-**The field now agrees.** "Programmable Wave-Domain Computing" (del Hougne, Di Renzo, Alù, Cui, Eldar, Engheta, Hu & Ozcan — HAL:05487878, posted Feb 2026, under review as of 2026-08-31) is a multi-institution perspective unifying metasurface computing, wireless networks, and computation under one programmable-wave umbrella. Three of the names this map is built on are authors. The unifying framing this surface was first to organize for builders is now being claimed by the field's own leading figures.
+**The field now agrees.** "Programmable wave-domain computing in wireless communications" (del Hougne, Di Renzo, Alù, Cui, Eldar, Engheta, Hu & Ozcan — HAL:05487878, posted Feb 2026, under review as of 2026-09-30) is a multi-institution perspective unifying metasurface computing, wireless networks, and computation under one programmable-wave umbrella. Three of the names this map is built on are authors. This surface covers the same territory from the builder's side: runnable kernels, hello-world experiments, and a reading order.
 
 The opportunity is the gap: there is no unified developer surface. The four lineages publish in *Nature*, *Science*, *IEEE Trans. Inf. Theory* — and nowhere a builder can land. Whoever builds the bridge — the SDK, the simulator, the "hello world" — defines the frame for the field.
 
@@ -34,14 +34,14 @@ The opportunity is the gap: there is no unified developer surface. The four line
 | Role | Citation |
 |---|---|
 | Origin | Silva et al., "Performing mathematical operations with metamaterials," *Science* 343, 160–163 (2014). University of Pennsylvania (Engheta group). |
-| SOTA | "Programmable wave-based analog computing metastructure," *Nature Communications* (2025). arXiv:2301.02850 |
+| SOTA | Tzarouchis, Edwards & Engheta, "Programmable wave-based analog computing machine: a metastructure that designs metastructures," *Nature Communications* 16, 908 (2025), [DOI 10.1038/s41467-025-56019-1](https://doi.org/10.1038/s41467-025-56019-1). arXiv:2301.02850 |
 | Review | Zangeneh-Nejad, Sounas, Alù & Fleury, "Analogue computing with metamaterials," *Nature Reviews Materials* 6, 207–225 (2021). 560 citations. |
 | ENZ calculus | Li et al., "Performing calculus with epsilon-near-zero metamaterials," *Science Advances* 8(30), eabq6198 (2022). Tsinghua, Yue Li group. |
 | Equation solver | Mohammadi Estakhri, Edwards & Engheta, "Inverse-designed metastructures that solve equations," *Science* 363, 1333–1338 (2019). Penn. |
 
 **Key labs:** Engheta (Penn) — central figure; Alù (CUNY/ASRC); Fleury (EPFL); Yue Li (Tsinghua).
 
-**Currency note (verified 2026-08-31):** The 2025 anchor remains SOTA — nothing published through August 2026 beats its matrix size, moves to GHz operation, or demonstrates a new operator class at larger scale. Two in-window developments worth tracking: "Recurrent wave computing in space-time metamaterials" (Castaldi, Coppolaro, Moccia, Rizza, Engheta & Galdi, submitted July 18 2026, under review) extends the operator family to time-varying media that compute recurrently; the Fleury lab (EPFL) has a "computational space with model-free metasurface neural network" under review, confirming that lineage's entry into metasurfaces-as-computers. A low-cost fabrication datapoint: arXiv:2603.24604 builds a 4×4 DFT in microstrip with commodity hybrid couplers and phase shifters — PCB-tier wave compute is real.
+**Currency note (verified 2026-08-31, re-checked 2026-09-30):** The 2025 anchor remains SOTA for closed-loop matrix inversion — nothing published through September 2026 beats its 5×5 size or demonstrates inversion at GHz. GHz-band wave computing does exist for other operator classes: a reconfigurable metamaterial processing unit that solves linear calculus equations at 1.4 GHz (Fu et al., *Nature Communications* 15, 6258 (2024), [DOI 10.1038/s41467-024-50483-x](https://doi.org/10.1038/s41467-024-50483-x)) and programmable microwave circuits performing universal unitary matrix multiplication across 1.5–3.0 GHz (Keshavarz, Zelaya, Shariati & Miri, *Nature Communications* 16, 8514 (2025), [DOI 10.1038/s41467-025-63486-z](https://doi.org/10.1038/s41467-025-63486-z)). Two in-window developments worth tracking: "Recurrent wave computing in space-time metamaterials" (Castaldi, Coppolaro, Moccia, Rizza, Engheta & Galdi, submitted July 18 2026, under review) extends the operator family to time-varying media that compute recurrently; the Fleury lab (EPFL) has a "computational space with model-free metasurface neural network" under review, confirming that lineage's entry into metasurfaces-as-computers. Also under review: "Wave-based matrix operations with incoherent light via ray tracing" (Alex-Amor, Nikkhah & Engheta, submitted June 2026), which moves the operator family to incoherent light. A low-cost fabrication datapoint: arXiv:2603.24604 (Nerini, Liu & Clerckx, accepted by IEEE) builds a 4×4 DFT in microstrip with commodity hybrid couplers and phase shifters — PCB-tier wave compute is real.
 
 **SOTA device (the anchor paper):** 45 MHz programmable metastructure with voltage-controlled phase shifters + amplifiers as "multiplier modules." Open-loop = matrix-vector multiply (~0.001 relative error). Closed-loop with feedback = matrix inversion / equation solving (~0.005 error). Demonstrates matrix inversion (stationary), Newton's method root-finding, and Lagrangian constrained optimization (non-stationary). Authors note the module could be implemented at RF (GHz) and photonic (THz) platforms, same principle.
 
@@ -68,7 +68,7 @@ metasurface_kernel(operator_matrix):
 | Origin | Nazer & Gastpar, "Compute-and-forward: Harnessing interference through structured codes," *IEEE Trans. Inf. Theory* 57(10), 6463–6486 (2011). Founding result. ~18 years old. |
 | Survey | "Over-the-Air Computation for 6G: Foundations, Technologies, and Applications," arXiv:2210.10524 (2022) `[preprint]` |
 | Survey | "A Survey on Over-the-Air Computation," arXiv:2210.11350 (2022) `[preprint]` |
-| Recent theory | Eldar (MIT/Technion), Goldsmith (Stanford), Gündüz (Imperial College) |
+| Recent theory | Eldar (Weizmann Institute of Science), Goldsmith (Stony Brook University; formerly Stanford and Princeton), Gündüz (Imperial College) |
 | RIS + FL | "Empowering Over-the-Air Personalized Federated Learning via RIS," arXiv:2408.12162 (2024) `[preprint]` |
 
 **Core claim (the user's "RF as operand" framing, stated plainly):**
@@ -93,7 +93,7 @@ aircomp_kernel(signals, function="sum"):
 - **Tier 1.5 — nested-lattice coded** (`docs/hello-world-lattice-aircomp.md`, `rf_compute/lattice.py`): the full Nazer/Gastpar construction at toy scale — exact integer sums mod L from one noisy channel use, compute-and-forward coefficients as channel gains, error decaying exponentially in the lattice dimension, individual messages structurally absent at the receiver. Free (NumPy only).
 - **Tier 1.6 — fading-channel coefficients** (`docs/hello-world-fading-coefficients.md`, `rf_compute/coefficients.py`): the selection problem — computation-rate maximization over the integer coefficient vector, MMSE α, the Nazer/Gastpar norm-bound exhaustive search, and LLL reduction. The honest finding: the plain sum is undecodable (rate zero) on ~95% of fading realizations; selection finds a decodable equation and drops faded nodes instead of paying to invert them. Free (NumPy only).
 
-**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; next checkpoint is the September 2026 RAN plenary). For the lattice tiers specifically: an un-inverted receiver (real α < 1 with an R^n lattice decoder — the toys invert the channel to keep the scalar decoder exact), complex fading with Gaussian-integer lattices, random-lattice ensembles beyond the repetition code, the exact polynomial selection algorithm of Sahraei & Gastpar 2014 (no OSS implementation exists), and the SDR sync/dither-seed-sharing deltas.
+**Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; re-checked 2026-09-30 after the September 2026 RAN#113 plenary, which added no AirComp item; next checkpoint is RAN#114, December 2026). For the lattice tiers specifically: an un-inverted receiver (real α < 1 with an R^n lattice decoder — the toys invert the channel to keep the scalar decoder exact), complex fading with Gaussian-integer lattices, random-lattice ensembles beyond the repetition code, the exact polynomial selection algorithm of Sahraei & Gastpar 2014 (no OSS implementation exists), and the SDR sync/dither-seed-sharing deltas.
 
 **Currency note (verified 2026-08-31):** The deferral boundary above holds verbatim. In-window literature is dense and converging on this project's thesis: arXiv:2608.13353 (Aug 13 2026) uses microwave linear analog computers to aid AirComp beamforming — the first direct computational-metamaterials × AirComp crossover, the two lineages this map holds apart fusing in the literature. arXiv:2607.16360 (EML-AirComp) extends AirComp beyond sum/mean toward general nomographic function trees via a single reusable exp-minus-log gate. arXiv:2607.22509 (MiLAC, Nerini & Clerckx, July 24 2026) formally names RF-domain linear algebra as a communications subfield — matrix inversion at quadratic rather than cubic complexity scaling.
 
@@ -138,7 +138,7 @@ microwave_photonic_kernel(matrix, vector):
 |---|---|
 | Canonical | Torrejon et al., "Neuromorphic computing with nanoscale spintronic oscillators," *Nature* 547, 428–431 (2017). 99.6% spoken-digit recognition. CNRS-Thales / Paris-Saclay / NIST. |
 | Review | Grollier, Querlioz, Camsari et al., "Neuromorphic Spintronics," *Nature Electronics* 3(7) (2020) |
-| Recent | Marrows et al., "Neuromorphic computing with spintronics," *Nature* (2024). 99 citations. Confirms reservoirs "read via microwave absorption." |
+| Recent | Marrows, Barker, Moore & Moorsom, "Neuromorphic computing with spintronics," *npj Spintronics* 2, 12 (2024). Confirms reservoirs "read via microwave absorption." |
 
 **Key labs:** Grollier (CNRS-Thales) — central; Querlioz (Paris-Saclay); Camsari (Purdue); Stiles (NIST).
 
@@ -229,7 +229,7 @@ Five reproducible experiments, escalating in cost and complexity. Each maps to a
 | **Cost** | Free (Mode A: simulation) / ~$200 clone, ~$395 official (Mode B: software-in-the-loop, 1 HackRF + 1 RTL-SDR) / ~$350 clone, ~$480 official (Mode C: analog feedback loop, adds circulator + attenuator + splitter). |
 | **What it proves** | Closed-loop RF feedback solves matrix inversion / linear equations in the wave domain. Open-loop does the multiply; the feedback loop does the inversion. The wave domain *settles* to the solution. |
 | **The lesson** | Iterative algorithms (stationary fixed-point / Richardson-Jacobi-type, Newton's method, Lagrangian optimization) have wave-domain implementations. Computation is not bound to clock cycles — it's bound to settling time. |
-| **Citation** | *Nature Communications* (2025), arXiv:2301.02850 |
+| **Citation** | Tzarouchis, Edwards & Engheta, *Nature Communications* 16, 908 (2025), DOI 10.1038/s41467-025-56019-1, arXiv:2301.02850 |
 | **Difficulty** | Advanced — Mode A (simulation) is beginner-friendly; Mode B requires calibration + channel estimation; Mode C requires analog feedback loop stabilization. |
 | **Walkthrough** | `docs/hello-world-matrix-inversion.md` |
 

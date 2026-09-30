@@ -54,7 +54,7 @@ Citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Where a pa
 
 ### Nature Communications 2025 — The SOTA anchor paper
 
-**Citation:** "Programmable wave-based analog computing metastructure." *Nature Communications* (2025). [arXiv:2301.02850](https://arxiv.org/abs/2301.02850)
+**Citation:** Tzarouchis, D. C., Edwards, B. & Engheta, N. "Programmable wave-based analog computing machine: a metastructure that designs metastructures." *Nature Communications* **16**, 908 (2025). [DOI 10.1038/s41467-025-56019-1](https://doi.org/10.1038/s41467-025-56019-1) · [arXiv:2301.02850](https://arxiv.org/abs/2301.02850)
 
 **What it claims:** A reconfigurable RF metastructure at 45 MHz performs matrix inversion (stationary problem), Newton's method root-finding, and Lagrangian constrained optimization (non-stationary problems) in the wave domain. Open-loop = matrix-vector multiply (~0.001 relative error); closed-loop with feedback = matrix inversion / equation solving (~0.005 error). The device uses voltage-controlled phase shifters + amplifiers as "multiplier modules." Authors note the module could be implemented at RF (GHz) and photonic (THz) platforms.
 
@@ -304,9 +304,9 @@ Citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Where a pa
 
 ---
 
-### Marrows et al. 2024 — *Nature* — The 2024 status update
+### Marrows et al. 2024 — *npj Spintronics* — The 2024 status update
 
-**Citation:** Marrows, I. et al. "Neuromorphic computing with spintronics." *Nature* (npj/experimental), 2024. [DOI: 10.1038/s44306-024-00019-2](https://doi.org/10.1038/s44306-024-00019-2)
+**Citation:** Marrows, C. H., Barker, J., Moore, T. A. & Moorsom, T. "Neuromorphic computing with spintronics." *npj Spintronics* **2**, 12 (2024). [DOI: 10.1038/s44306-024-00019-2](https://doi.org/10.1038/s44306-024-00019-2)
 
 **What it claims:** A 2024 review confirming the spin-torque-neuromorphic line is active and explicitly microwave-coupled — reservoir systems can be "read via microwave absorption."
 
@@ -360,7 +360,7 @@ This is the computational-core path, for readers who want to understand `rf_comp
 
 ### Phase 4 — The context (1 hour)
 
-13. **Marrows 2024** (Nature) — the 2024 status of spin-torque neuromorphic
+13. **Marrows 2024** (npj Spintronics) — the 2024 status of spin-torque neuromorphic
 14. **Lightmatter press** (vendor) — the commercial frontier (with appropriate skepticism)
 
 After Phase 1 you have the vocabulary. After Phase 2 you have the four-lineage map. After Phase 3 you know where the frontier is. After Phase 3b you have the lattice machinery under you. After Phase 4 you know who's trying to commercialize it.
