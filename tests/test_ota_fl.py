@@ -109,12 +109,16 @@ class TestData:
 
 # ─── The scoreline ─────────────────────────────────────────────────────────
 
-class TestScoreline:
+# Module-level so it works on every supported Python: a class-scoped fixture
+# must be a plain function (pytest 10 removes the instance-method form), and
+# `@staticmethod` is not a substitute -- staticmethod objects only gained
+# __name__ in 3.10, which breaks collection on 3.9.
+@pytest.fixture(scope="module")
+def severe():
+    return scoreline(rounds=40, num_seeds=4, seed=0)
 
-    @pytest.fixture(scope="class")
-    @staticmethod
-    def severe():
-        return scoreline(rounds=40, num_seeds=4, seed=0)
+
+class TestScoreline:
 
     def test_equalizer_matches_orthogonal_without_phase_sync(self, severe):
         assert abs(severe['ota_equalized']['accuracy_mean']
