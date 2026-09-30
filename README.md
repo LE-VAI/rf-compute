@@ -3,8 +3,8 @@
 <!-- vai-hero:start -->
 <p align="center">
   <picture>
-    <source media="(prefers-reduced-motion: reduce)" srcset="docs/media/hero-poster.png">
-    <img src="docs/media/hero-loop.webp" width="800" alt="Two carrier waves travel across the frame. Carrier A completes one cycle per loop and carrier B completes two. The bottom lane shows their sum, sampled as orange stems: the interference is the operation.">
+    <source media="(prefers-reduced-motion: reduce)" srcset="https://raw.githubusercontent.com/LE-VAI/rf-compute/main/docs/media/hero-poster.png">
+    <img src="https://raw.githubusercontent.com/LE-VAI/rf-compute/main/docs/media/hero-loop.webp" width="800" alt="Two carrier waves travel across the frame. Carrier A completes one cycle per loop and carrier B completes two. The bottom lane shows their sum, sampled as orange stems: the interference is the operation.">
   </picture>
 </p>
 <p align="center"><sub>A 4-second loop. It plays once and rests, and shows a still frame if you prefer reduced motion. <a href="https://le-vai.github.io/LE-VAI/loops/#rf-compute">Watch it on repeat</a>.</sub></p>
@@ -53,7 +53,7 @@ Two transmitters send pre-coded signals simultaneously. The receiver reads their
 
 This is the simplest wave-compute primitive that exists. If you can run this, you understand the field.
 
-📖 **Full walkthrough:** [`docs/hello-world-aircomp.md`](docs/hello-world-aircomp.md) — hardware, code, what to expect, troubleshooting
+📖 **Full walkthrough:** [`docs/hello-world-aircomp.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) — hardware, code, what to expect, troubleshooting
 
 **Budget option:** One HackRF + one RTL-SDR (clone-tier ~$190, official ~$380). You transmit x1, x2, and x1+x2 sequentially and compare captures in post-processing. You lose the simultaneity that makes AirComp profound, but you learn the signal-processing structure for half the cost. Details in the walkthrough.
 
@@ -70,7 +70,7 @@ python examples/tier2_convolution_kernel.py # 4 operators
 python examples/tier3_inversion_kernel.py   # solves Ax=b
 ```
 
-The simulation kernel runs the same API as the hardware kernel — switch `backend="sim"` to `backend="sdr"` when you have SDRs. See [`docs/INSTALL.md`](docs/INSTALL.md) for the SDR driver install (the one friction point when you're ready for hardware).
+The simulation kernel runs the same API as the hardware kernel — switch `backend="sim"` to `backend="sdr"` when you have SDRs. See [`docs/INSTALL.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/INSTALL.md) for the SDR driver install (the one friction point when you're ready for hardware).
 
 ---
 
@@ -88,7 +88,7 @@ Five reproducible experiments, escalating in cost. Each maps to a peer-reviewed 
 
 Tier 3 has three modes (simulation free, software-in-the-loop ~$200 clone / ~$395 official, analog feedback ~$350 clone / ~$480 official) — see the walkthrough for the trade-off.
 
-📖 **Full ladder walkthroughs:** [Tier 1](docs/hello-world-aircomp.md) · [Tier 1.5](docs/hello-world-lattice-aircomp.md) · [Tier 1.6](docs/hello-world-fading-coefficients.md) · [Tier 2](docs/hello-world-convolution.md) · [Tier 3](docs/hello-world-matrix-inversion.md) — each with parts lists, code, and troubleshooting
+📖 **Full ladder walkthroughs:** [Tier 1](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) · [Tier 1.5](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) · [Tier 1.6](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) · [Tier 2](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) · [Tier 3](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — each with parts lists, code, and troubleshooting
 
 ---
 
@@ -106,13 +106,13 @@ We are explicitly **not** building:
 
 These are real, important problems. They belong to the metamaterials physics community, the antenna engineers, the RF circuit designers, the standards bodies, and industry — not to a research-and-education surface. We name them clearly so builders know where the open frontier lives.
 
-📖 **Full deferral table:** [`docs/field-map.md`](docs/field-map.md#what-we-are-not-building-graceful-deferral-to-the-community)
+📖 **Full deferral table:** [`docs/field-map.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/field-map.md#what-we-are-not-building-graceful-deferral-to-the-community)
 
 ---
 
 ## The field map
 
-The complete lineage-to-primitive map lives in [`docs/field-map.md`](docs/field-map.md). It covers:
+The complete lineage-to-primitive map lives in [`docs/field-map.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/field-map.md). It covers:
 
 - Each of the four lineages with origin papers, SOTA devices, key labs, and SDR-mappable primitives
 - The SDR bridge: why software-defined radio is the unified developer surface
@@ -166,7 +166,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 | Tzarouchis, Edwards & Engheta, "Programmable wave-based analog computing machine: a metastructure that designs metastructures," *Nature Communications* 16, 908 ([DOI](https://doi.org/10.1038/s41467-025-56019-1)) | 2025 | **The SOTA.** Matrix inversion, Newton's method, Lagrangian optimization at 45 MHz. |
 | Chegini, Guan & Yao, "Microwave photonic neural network," *J. Lightwave Technology* | 2025 | RF photonic MVM. 55×10⁶ MAC/s. |
 
-📖 **Annotated bibliography:** [`docs/bibliography.md`](docs/bibliography.md) — every citation, reading order, how to use it
+📖 **Annotated bibliography:** [`docs/bibliography.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/bibliography.md) — every citation, reading order, how to use it
 
 ---
 
@@ -174,35 +174,35 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 
 **Pre-release.** The spine is complete: field map, five-tier hello-world ladder, annotated bibliography, contribution guide, and the SDR kernel abstraction. The simulation kernel is fully reproducible (every run seed-deterministic; 92 tests).
 
-- ✅ [Field map](docs/field-map.md) — the spine document
-- ✅ [Tier 1: AirComp sum](docs/hello-world-aircomp.md) — the $350 hello world
-- ✅ [Tier 1.5: Lattice-coded AirComp](docs/hello-world-lattice-aircomp.md) — the $0 exact-computation primitive (nested-lattice kernel)
-- ✅ [Tier 1.6: Fading-channel coefficients](docs/hello-world-fading-coefficients.md) — the $0 coefficient-selection tier (computation-rate maximization, MMSE α, LLL + norm-bound search)
-- ✅ [Tier 2: Wave-domain convolution](docs/hello-world-convolution.md) — the $200 linear-operator primitive
-- ✅ [Tier 3: Matrix inversion via feedback](docs/hello-world-matrix-inversion.md) — the capstone (free / $200 / $350)
-- ✅ [Annotated bibliography](docs/bibliography.md) — every citation, reading order, how to use it
-- ✅ [Installation guide](docs/INSTALL.md) — pip install, SDR drivers, troubleshooting
-- ✅ [Contributing guide](CONTRIBUTING.md) — the reproducibility + provenance + honesty bar
-- ✅ [LICENSE](LICENSE) — MIT
-- ✅ [SDR kernel abstraction](rf_compute/) — one API across all four lineages
-  - ✅ [`examples/tier1_aircomp_kernel.py`](examples/tier1_aircomp_kernel.py) — Tier 1 with the kernel
-  - ✅ [`examples/tier1_5_lattice_aircomp_kernel.py`](examples/tier1_5_lattice_aircomp_kernel.py) — Tier 1.5 with the kernel
-  - ✅ [`examples/tier1_6_fading_coefficients.py`](examples/tier1_6_fading_coefficients.py) — Tier 1.6 with the kernel
-  - ✅ [`examples/tier2_convolution_kernel.py`](examples/tier2_convolution_kernel.py) — Tier 2 with the kernel
-  - ✅ [`examples/tier3_inversion_kernel.py`](examples/tier3_inversion_kernel.py) — Tier 3 with the kernel
+- ✅ [Field map](https://github.com/LE-VAI/rf-compute/blob/main/docs/field-map.md) — the spine document
+- ✅ [Tier 1: AirComp sum](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) — the $350 hello world
+- ✅ [Tier 1.5: Lattice-coded AirComp](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) — the $0 exact-computation primitive (nested-lattice kernel)
+- ✅ [Tier 1.6: Fading-channel coefficients](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) — the $0 coefficient-selection tier (computation-rate maximization, MMSE α, LLL + norm-bound search)
+- ✅ [Tier 2: Wave-domain convolution](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) — the $200 linear-operator primitive
+- ✅ [Tier 3: Matrix inversion via feedback](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — the capstone (free / $200 / $350)
+- ✅ [Annotated bibliography](https://github.com/LE-VAI/rf-compute/blob/main/docs/bibliography.md) — every citation, reading order, how to use it
+- ✅ [Installation guide](https://github.com/LE-VAI/rf-compute/blob/main/docs/INSTALL.md) — pip install, SDR drivers, troubleshooting
+- ✅ [Contributing guide](https://github.com/LE-VAI/rf-compute/blob/main/CONTRIBUTING.md) — the reproducibility + provenance + honesty bar
+- ✅ [LICENSE](https://github.com/LE-VAI/rf-compute/blob/main/LICENSE) — MIT
+- ✅ [SDR kernel abstraction](https://github.com/LE-VAI/rf-compute/tree/main/rf_compute/) — one API across all four lineages
+  - ✅ [`examples/tier1_aircomp_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier1_aircomp_kernel.py) — Tier 1 with the kernel
+  - ✅ [`examples/tier1_5_lattice_aircomp_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier1_5_lattice_aircomp_kernel.py) — Tier 1.5 with the kernel
+  - ✅ [`examples/tier1_6_fading_coefficients.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier1_6_fading_coefficients.py) — Tier 1.6 with the kernel
+  - ✅ [`examples/tier2_convolution_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier2_convolution_kernel.py) — Tier 2 with the kernel
+  - ✅ [`examples/tier3_inversion_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier3_inversion_kernel.py) — Tier 3 with the kernel
 - ⏳ Community contributions (see `CONTRIBUTING.md`)
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/LE-VAI/rf-compute/blob/main/LICENSE).
 
 ---
 
 ## Provenance
 
-This project is a research-and-education surface synthesized from peer-reviewed literature. The underlying research was conducted 2026-07-31 via a multi-source academic search across *Science*, *Nature*, *Nature Photonics*, *IEEE Trans. Inf. Theory*, *Journal of Lightwave Technology*, and arXiv. Full provenance and citation verification in [`docs/field-map.md`](docs/field-map.md#provenance).
+This project is a research-and-education surface synthesized from peer-reviewed literature. The underlying research was conducted 2026-07-31 via a multi-source academic search across *Science*, *Nature*, *Nature Photonics*, *IEEE Trans. Inf. Theory*, *Journal of Lightwave Technology*, and arXiv. Full provenance and citation verification in [`docs/field-map.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/field-map.md#provenance).
 
 All citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Lightmatter performance figures are vendor-sourced. AirComp surveys are preprints. The spin-torque SDR mapping is approximate, not a hardware equivalent.
 

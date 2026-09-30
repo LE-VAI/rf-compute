@@ -39,6 +39,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
 ]
 
@@ -74,10 +75,12 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/rf-compute/rf-compute/blob/main/docs/field-map.md"
-FieldMap = "https://github.com/rf-compute/rf-compute/blob/main/docs/field-map.md"
-Bibliography = "https://github.com/rf-compute/rf-compute/blob/main/docs/bibliography.md"
-Contributing = "https://github.com/rf-compute/rf-compute/blob/main/CONTRIBUTING.md"
+Homepage = "https://github.com/LE-VAI/rf-compute"
+Source = "https://github.com/LE-VAI/rf-compute"
+Issues = "https://github.com/LE-VAI/rf-compute/issues"
+Documentation = "https://github.com/LE-VAI/rf-compute/blob/main/docs/field-map.md"
+Bibliography = "https://github.com/LE-VAI/rf-compute/blob/main/docs/bibliography.md"
+Contributing = "https://github.com/LE-VAI/rf-compute/blob/main/CONTRIBUTING.md"
 
 [tool.setuptools]
 # We use a flat package layout: the package is `rf_compute/` at the repo root.
@@ -86,6 +89,6 @@ Contributing = "https://github.com/rf-compute/rf-compute/blob/main/CONTRIBUTING.
 packages = ["rf_compute"]
 
 [tool.pytest.ini_options]
-# Tests (when added) live in tests/. Run with: pytest
+# Tests live in tests/. Run with: pytest
 testpaths = ["tests"]
 python_files = ["test_*.py"]
