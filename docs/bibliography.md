@@ -52,7 +52,7 @@ Citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Where a pa
 
 ---
 
-### Nature Communications 2025 — The SOTA anchor paper
+### Tzarouchis, Edwards & Engheta 2025 — *Nature Communications* — The SOTA anchor paper
 
 **Citation:** Tzarouchis, D. C., Edwards, B. & Engheta, N. "Programmable wave-based analog computing machine: a metastructure that designs metastructures." *Nature Communications* **16**, 908 (2025). [DOI 10.1038/s41467-025-56019-1](https://doi.org/10.1038/s41467-025-56019-1) · [arXiv:2301.02850](https://arxiv.org/abs/2301.02850)
 
@@ -143,6 +143,46 @@ Citations are peer-reviewed unless marked `[preprint]` or `[vendor]`. Where a pa
 **What it claims:** Studies over-the-air federated averaging (Air-FedAvg) — AirComp-based gradient aggregation in federated edge learning — and shows an order-of-magnitude shorter training latency than digital OMA/TDMA baselines, with power control at the devices and denoising factors at the server.
 
 **Why it matters for this surface:** The applied, contemporary face of the same resource argument: AirComp's one-slot aggregation versus orthogonal multiple access's N slots is measured here in training latency, not just channel uses. This is the comparison convention the walkthroughs adopt (AirComp in 1 use vs TDMA in N), stated in the literature's own terms.
+
+---
+
+### Zhu, Wang & Huang 2020 — *IEEE Trans. Wireless Commun.* — Broadband analog aggregation
+
+**Citation:** Zhu, G., Wang, Y. & Huang, K. "Broadband Analog Aggregation for Low-Latency Federated Edge Learning." *IEEE Trans. Wireless Commun.* **19**(1), 491–506 (2020). [DOI 10.1109/TWC.2019.2946245](https://doi.org/10.1109/TWC.2019.2946245) · [arXiv:1812.11494](https://arxiv.org/abs/1812.11494)
+
+**What it claims:** Model updates from many edge devices can be aggregated by analog superposition over a broadband channel, with truncated channel inversion so that devices in deep fades sit the round out. Aggregation latency then stops growing with the number of devices.
+
+**Why it matters for this surface:** The scheme Tier 4 implements: truncated channel inversion, with the weakest participant setting the common scaling. It is the direct application of the Tier 1 primitive to the problem AirComp is most often proposed for.
+
+---
+
+### Yang, Jiang, Shi & Ding 2020 — *IEEE Trans. Wireless Commun.* — Federated learning via over-the-air computation
+
+**Citation:** Yang, K., Jiang, T., Shi, Y. & Ding, Z. "Federated Learning via Over-the-Air Computation." *IEEE Trans. Wireless Commun.* **19**(3), 2022–2035 (2020). [DOI 10.1109/TWC.2019.2961673](https://doi.org/10.1109/TWC.2019.2961673) · [arXiv:1812.11750](https://arxiv.org/abs/1812.11750)
+
+**What it claims:** Joint device selection and receiver beamforming for over-the-air model aggregation, trading the number of participating devices against aggregation error.
+
+**Why it matters for this surface:** The participation-versus-error trade-off that Tier 4's truncation threshold exposes as a single knob.
+
+---
+
+### Amiri & Gündüz 2020 — *IEEE Trans. Signal Process.* — Distributed SGD over the air
+
+**Citation:** Amiri, M. M. & Gündüz, D. "Machine Learning at the Wireless Edge: Distributed Stochastic Gradient Descent Over-the-Air." *IEEE Trans. Signal Process.* **68**, 2155–2169 (2020). [DOI 10.1109/TSP.2020.2981904](https://doi.org/10.1109/TSP.2020.2981904)
+
+**What it claims:** Compares digital (quantize, then transmit orthogonally) and analog (transmit over the air) distributed SGD over a bandwidth-limited channel.
+
+**Why it matters for this surface:** The analog-versus-orthogonal comparison Tier 4's scoreline makes, in the literature's own terms.
+
+---
+
+### Shao, Gündüz & Liew 2022 — *IEEE Trans. Wireless Commun.* — Misaligned over-the-air computation
+
+**Citation:** Shao, Y., Gündüz, D. & Liew, S. C. "Federated Edge Learning With Misaligned Over-the-Air Computation." *IEEE Trans. Wireless Commun.* **21**(6), 3951–3964 (2022). [DOI 10.1109/TWC.2021.3125798](https://doi.org/10.1109/TWC.2021.3125798) · [arXiv:2102.13604](https://arxiv.org/abs/2102.13604) · code (MIT): [hku-icl/MisAlignedOAC](https://github.com/hku-icl/MisAlignedOAC)
+
+**What it claims:** Over-the-air aggregation hinges on precoding accuracy and synchronization that real devices lack. The paper models residual channel-gain mismatch and symbol-level asynchrony, obtains oversampled, whitened samples of the misaligned superposition, and estimates the sum with a sum-product ML estimator (linear in packet length) or an aligned-sample estimator. At high SNR the ML estimator reaches optimal learning performance regardless of phase misalignment.
+
+**Why it matters for this surface:** Tier 4's misalignment model (per-device phase offsets and timing offsets with rectangular pulses) follows this paper. Tier 4's equalizer is a deliberately simpler one-sample-per-symbol receiver; this paper and its code are where the stronger receivers live.
 
 ---
 
@@ -357,6 +397,13 @@ This is the computational-core path, for readers who want to understand `rf_comp
 10. **Liu & Ling 2016** (IEEE TWC) — coefficient selection done efficiently; also the pointer to the complex-channel setting
 11. **Sahraei & Gastpar 2014** (Allerton) — the exact polynomial algorithm for the selection problem (arXiv:1410.3656)
 12. **Zamir 2014** (Cambridge) — the textbook, for the full picture
+
+### Phase 3c — AirComp at work (1 hour, optional)
+
+For readers heading into `rf_compute/ota_fl.py` and the Tier 4 walkthrough.
+
+13. **Zhu, Wang & Huang 2020** (IEEE TWC) — analog aggregation with truncated channel inversion: the scheme Tier 4 runs
+14. **Shao, Gündüz & Liew 2022** (IEEE TWC) — what misalignment does to the sum, and the receivers that fix it
 
 ### Phase 4 — The context (1 hour)
 

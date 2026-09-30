@@ -68,6 +68,7 @@ python examples/tier1_5_lattice_aircomp_kernel.py  # exact lattice sums, $0
 python examples/tier1_6_fading_coefficients.py     # coefficient selection on fading, $0
 python examples/tier2_convolution_kernel.py # 4 operators
 python examples/tier3_inversion_kernel.py   # solves Ax=b
+python examples/tier4_ota_federated_learning.py  # federated learning over the air, $0
 ```
 
 The simulation kernel runs the same API as the hardware kernel — switch `backend="sim"` to `backend="sdr"` when you have SDRs. See [`docs/INSTALL.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/INSTALL.md) for the SDR driver install (the one friction point when you're ready for hardware).
@@ -76,7 +77,7 @@ The simulation kernel runs the same API as the hardware kernel — switch `backe
 
 ## The hello-world ladder
 
-Five reproducible experiments, escalating in cost. Each maps to a peer-reviewed result.
+Six reproducible experiments, escalating in cost. Each maps to a peer-reviewed result.
 
 | Tier | Experiment | Cost (clone-tier / official) | Proves | Citation |
 |---|---|---|---|---|
@@ -84,11 +85,12 @@ Five reproducible experiments, escalating in cost. Each maps to a peer-reviewed 
 | **1.5** | Lattice-coded AirComp | free (sim) | The exact result: noise-resilient sums in one channel use, no message decoded | Nazer & Gastpar, *IEEE TIT* (2007/2011) |
 | **1.6** | Fading-channel coefficients | free (sim) | Coefficients are an optimization: the plain sum is undecodable on ~95% of fading channels; selection finds a decodable one | Nazer & Gastpar (2011); Sahraei & Gastpar (2014); Liu & Ling, *IEEE TWC* (2016) |
 | **2** | Wave-domain convolution | ~$200 / ~$395 | Linear operators are native to wave physics | Silva et al., *Science* (2014) |
-| **3** | Matrix inversion via feedback | free / ~$200 / ~$350 | The wave domain solves equations; settling, not iterating | *Nature Communications* (2025) |
+| **3** | Matrix inversion via feedback | free / ~$200 / ~$350 | The wave domain solves equations; settling, not iterating | Tzarouchis, Edwards & Engheta, *Nature Communications* (2025) |
+| **4** | Over-the-air federated learning | free (sim) | The channel aggregates model updates in `d+1` uses however many devices transmit; a shared pilot rescues training from misalignment, and heterogeneity bounds the rescue | Zhu, Wang & Huang, *IEEE TWC* (2020); Shao, Gündüz & Liew, *IEEE TWC* (2022) |
 
 Tier 3 has three modes (simulation free, software-in-the-loop ~$200 clone / ~$395 official, analog feedback ~$350 clone / ~$480 official) — see the walkthrough for the trade-off.
 
-📖 **Full ladder walkthroughs:** [Tier 1](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) · [Tier 1.5](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) · [Tier 1.6](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) · [Tier 2](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) · [Tier 3](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — each with parts lists, code, and troubleshooting
+📖 **Full ladder walkthroughs:** [Tier 1](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) · [Tier 1.5](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) · [Tier 1.6](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) · [Tier 2](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) · [Tier 3](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) · [Tier 4](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) — each with parts lists, code, and troubleshooting
 
 ---
 
@@ -172,14 +174,15 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 
 ## Status
 
-**Pre-release.** The spine is complete: field map, five-tier hello-world ladder, annotated bibliography, contribution guide, and the SDR kernel abstraction. The simulation kernel is fully reproducible (every run seed-deterministic; 92 tests).
+**Pre-release.** The spine is complete: field map, six-tier hello-world ladder, annotated bibliography, contribution guide, and the SDR kernel abstraction. The simulation kernel is fully reproducible (every run seed-deterministic; 116 tests).
 
 - ✅ [Field map](https://github.com/LE-VAI/rf-compute/blob/main/docs/field-map.md) — the spine document
 - ✅ [Tier 1: AirComp sum](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) — the $350 hello world
 - ✅ [Tier 1.5: Lattice-coded AirComp](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) — the $0 exact-computation primitive (nested-lattice kernel)
 - ✅ [Tier 1.6: Fading-channel coefficients](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) — the $0 coefficient-selection tier (computation-rate maximization, MMSE α, LLL + norm-bound search)
 - ✅ [Tier 2: Wave-domain convolution](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) — the $200 linear-operator primitive
-- ✅ [Tier 3: Matrix inversion via feedback](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — the capstone (free / $200 / $350)
+- ✅ [Tier 3: Matrix inversion via feedback](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — the wave-domain capstone (free / $200 / $350)
+- ✅ [Tier 4: Over-the-air federated learning](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) — the AirComp capstone ($0): aggregation over the air, misalignment, and a pilot-aided equalizer
 - ✅ [Annotated bibliography](https://github.com/LE-VAI/rf-compute/blob/main/docs/bibliography.md) — every citation, reading order, how to use it
 - ✅ [Installation guide](https://github.com/LE-VAI/rf-compute/blob/main/docs/INSTALL.md) — pip install, SDR drivers, troubleshooting
 - ✅ [Contributing guide](https://github.com/LE-VAI/rf-compute/blob/main/CONTRIBUTING.md) — the reproducibility + provenance + honesty bar
@@ -190,6 +193,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
   - ✅ [`examples/tier1_6_fading_coefficients.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier1_6_fading_coefficients.py) — Tier 1.6 with the kernel
   - ✅ [`examples/tier2_convolution_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier2_convolution_kernel.py) — Tier 2 with the kernel
   - ✅ [`examples/tier3_inversion_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier3_inversion_kernel.py) — Tier 3 with the kernel
+  - ✅ [`examples/tier4_ota_federated_learning.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier4_ota_federated_learning.py) — Tier 4 with the kernel
 - ⏳ Community contributions (see `CONTRIBUTING.md`)
 
 ---

@@ -187,6 +187,41 @@ class FadingAirCompOperator(Operator):
 
 
 @dataclass
+class OTAAggregationOperator(Operator):
+    """
+    Lineage 2 — Over-the-Air Computation as a gradient aggregator (Tier 4).
+
+    K devices transmit their gradient vectors at once over a fading channel
+    (truncated channel inversion); the receiver estimates their AVERAGE from
+    the superposition. Optional misalignment — residual phase offsets up to
+    max_phase and timing offsets up to max_timing symbols — and a choice of
+    receiver: 'naive' (reads the superposition as if aligned) or
+    'equalized' (a shared pilot measures the aggregate channel taps, then a
+    two-tap least-squares deconvolution).
+
+    Maps to: Zhu, Wang & Huang, IEEE TWC 19(1) 491 (2020); misalignment
+    model — Shao, Gunduz & Liew, IEEE TWC 21(6) 3951 (2022).
+    Walkthrough: docs/hello-world-ota-federated-learning.md
+    """
+    snr_db: float = 20.0
+    max_phase: float = 0.0        # radians; residual phase offsets ~ U(-max_phase, max_phase)
+    max_timing: float = 0.0       # symbols; timing offsets ~ U(0, max_timing)
+    receiver: str = "equalized"   # 'naive' | 'equalized'
+    truncation: float = 0.3       # devices with |h| below this sit the round out
+    clip: float = 1.0             # gradient norm clip (bounds transmit power)
+    seed: Optional[int] = None    # channel randomness; None draws fresh
+    lineage: str = "aircomp_fl"
+
+    def __post_init__(self):
+        if self.receiver not in ("naive", "equalized"):
+            raise ValueError(
+                f"receiver '{self.receiver}' not supported; use 'naive' or 'equalized'"
+            )
+        if not 0.0 <= self.max_timing <= 1.0:
+            raise ValueError("max_timing must be in [0, 1] symbols")
+
+
+@dataclass
 class ConvolutionOperator(Operator):
     """
     Lineage 1 — Computational Metamaterials.
@@ -320,6 +355,8 @@ class WaveComputeKernel:
         Apply an operator to inputs (open-loop). Works for all four lineages.
 
         For AirCompOperator:    inputs is a list of N scalar values; returns the sum.
+        For OTAAggregationOperator: inputs is a list of K gradient vectors;
+                                returns the over-the-air aggregation record.
         For ConvolutionOperator: inputs is a 1-D signal array; returns x * h.
         For ReservoirOperator:  inputs is a 1-D signal (one sample per time
                                 step); returns the final reservoir state.
@@ -332,6 +369,8 @@ class WaveComputeKernel:
             return self._apply_lattice_aircomp(op, inputs)
         elif isinstance(op, FadingAirCompOperator):
             return self._apply_fading_aircomp(op, inputs)
+        elif isinstance(op, OTAAggregationOperator):
+            return self._apply_ota_aggregation(op, inputs)
         elif isinstance(op, ConvolutionOperator):
             return self._apply_convolution(op, inputs)
         elif isinstance(op, ReservoirOperator):
@@ -481,6 +520,22 @@ class WaveComputeKernel:
             snr_db=op.snr_db, rng=rng, selection=op.selection,
         )
 
+    # ─── OTA aggregation (Lineage 2, Tier 4) ──────────────────────────────
+
+    def _apply_ota_aggregation(self, op: OTAAggregationOperator, inputs) -> dict:
+        """
+        Aggregate K gradient vectors over the air. inputs is a list of K
+        equal-length 1-D arrays. Returns the ota_fl.ota_aggregate record:
+        'estimate' (the receiver's average), 'true_average', 'mse', 'nmse',
+        'participants', 'max_tx_power', 'channel_uses'.
+        """
+        from . import ota_fl as _ota
+        return _ota.ota_aggregate(
+            inputs, snr_db=op.snr_db, rng=np.random.default_rng(op.seed),
+            truncation=op.truncation, clip=op.clip, max_phase=op.max_phase,
+            max_timing=op.max_timing, receiver=op.receiver,
+        )
+
     # ─── Convolution (Lineage 1) ─────────────────────────────────────────
 
     def _apply_convolution(self, op: ConvolutionOperator, inputs) -> np.ndarray:
@@ -597,7 +652,7 @@ def hilbert(N: int = 64) -> ConvolutionOperator:
 
 __all__ = [
     'Operator', 'AirCompOperator', 'LatticeAirCompOperator',
-    'FadingAirCompOperator',
+    'FadingAirCompOperator', 'OTAAggregationOperator',
     'ConvolutionOperator', 'InversionOperator', 'ReservoirOperator',
     'WaveComputeKernel',
     'boxcar', 'differencer', 'matched', 'hilbert',

@@ -88,10 +88,11 @@ aircomp_kernel(signals, function="sum"):
     # no per-device demodulation — interference is the operation
 ```
 
-**Implemented at three levels:**
+**Implemented at four levels:**
 - **Tier 1 — analog superposition** (`docs/hello-world-aircomp.md`): the receiver reads a real-valued sum estimate. $0 in simulation; ~$350 clone-tier / ~$725 official over the air.
 - **Tier 1.5 — nested-lattice coded** (`docs/hello-world-lattice-aircomp.md`, `rf_compute/lattice.py`): the full Nazer/Gastpar construction at toy scale — exact integer sums mod L from one noisy channel use, compute-and-forward coefficients as channel gains, error decaying exponentially in the lattice dimension, individual messages structurally absent at the receiver. Free (NumPy only).
 - **Tier 1.6 — fading-channel coefficients** (`docs/hello-world-fading-coefficients.md`, `rf_compute/coefficients.py`): the selection problem — computation-rate maximization over the integer coefficient vector, MMSE α, the Nazer/Gastpar norm-bound exhaustive search, and LLL reduction. The honest finding: the plain sum is undecodable (rate zero) on ~95% of fading realizations; selection finds a decodable equation and drops faded nodes instead of paying to invert them. Free (NumPy only).
+- **Tier 4 — over-the-air federated learning** (`docs/hello-world-ota-federated-learning.md`, `rf_compute/ota_fl.py`): the primitive put to work — gradients from 20 devices aggregated in `d+1` channel uses plus a pilot, a misalignment model (phase + timing offsets), and a pilot-aided equalizer that rescues training without learning any single device's offset. The honest finding: the equalizer is exact only for what the devices' gradients share, so its error grows with data heterogeneity. Free (NumPy only).
 
 **Open problem (deferred to community):** Channel equalization under real multipath. Security (a malicious transmitter corrupts the computation). Power alignment across distributed transmitters. Integration into 6G standardization (3GPP) — AirComp is a research candidate, not yet in 3GPP study items (verified 2026-08-31 against the full Rel-20 6G study-item catalog and Qualcomm's Rel-21 milestone summary; re-checked 2026-09-30 after the September 2026 RAN#113 plenary, which added no AirComp item; next checkpoint is RAN#114, December 2026). For the lattice tiers specifically: an un-inverted receiver (real α < 1 with an R^n lattice decoder — the toys invert the channel to keep the scalar decoder exact), complex fading with Gaussian-integer lattices, random-lattice ensembles beyond the repetition code, the exact polynomial selection algorithm of Sahraei & Gastpar 2014 (no OSS implementation exists), and the SDR sync/dither-seed-sharing deltas.
 
@@ -176,7 +177,7 @@ SDR is the bridge because it's the one platform where a builder can touch RF wav
 
 ## The "Hello World" Ladder
 
-Five reproducible experiments, escalating in cost and complexity. Each maps to a peer-reviewed result.
+Six reproducible experiments, escalating in cost and complexity. Each maps to a peer-reviewed result.
 
 ### Tier 1 — AirComp Sum (the Nazer/Gastpar 2007 result, made legible)
 
@@ -232,6 +233,17 @@ Five reproducible experiments, escalating in cost and complexity. Each maps to a
 | **Citation** | Tzarouchis, Edwards & Engheta, *Nature Communications* 16, 908 (2025), DOI 10.1038/s41467-025-56019-1, arXiv:2301.02850 |
 | **Difficulty** | Advanced — Mode A (simulation) is beginner-friendly; Mode B requires calibration + channel estimation; Mode C requires analog feedback loop stabilization. |
 | **Walkthrough** | `docs/hello-world-matrix-inversion.md` |
+
+### Tier 4 — Over-the-Air Federated Learning (the AirComp capstone)
+
+| Field | Value |
+|---|---|
+| **Cost** | Free — pure simulation, NumPy only. |
+| **What it proves** | AirComp aggregates model updates in `d+1` channel uses plus a pilot, however many devices transmit — 3,180 uses against 24,000 for orthogonal slots over a 20-device run, at the same accuracy. With no phase sync the naive receiver's expected estimate is zero and training is a coin flip (mean 0.47 over 10 seeds); a shared pilot and a two-tap equalizer restore upper-bound accuracy (0.84) using only the aggregate channel. |
+| **The lesson** | The equalizer is exact only for what the devices' gradients have in common: its error grows with the gradient spread. Sync hardware shrinks the offsets; it does not make devices' data agree. And learning tolerates fresh, varying error far better than a signal that averages to zero. |
+| **Citation** | Zhu, Wang & Huang, *IEEE TWC* 19(1) 491 (2020); Yang, Jiang, Shi & Ding, *IEEE TWC* 19(3) 2022 (2020); Amiri & Gündüz, *IEEE TSP* 68 2155 (2020); misalignment model — Shao, Gündüz & Liew, *IEEE TWC* 21(6) 3951 (2022) |
+| **Difficulty** | Intermediate — the walkthrough derives the misaligned superposition and the equalizer; the code is one call |
+| **Walkthrough** | `docs/hello-world-ota-federated-learning.md` · module `rf_compute/ota_fl.py` · example `examples/tier4_ota_federated_learning.py` |
 
 ---
 

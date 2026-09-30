@@ -11,6 +11,7 @@ python examples/tier1_5_lattice_aircomp_kernel.py  # exact lattice sums
 python examples/tier1_6_fading_coefficients.py     # coefficient selection
 python examples/tier2_convolution_kernel.py # 4 operators
 python examples/tier3_inversion_kernel.py   # solves Ax=b
+python examples/tier4_ota_federated_learning.py  # federated learning over the air
 ```
 
 That's it. The simulation backend runs on NumPy alone — no SDR hardware, no RF drivers, no special permissions. You should see:
@@ -153,7 +154,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-This installs pytest, SoapySDR, and matplotlib together. Run the test suite with `pytest` from the repo root — 92 tests covering the kernel, the lattice machinery, coefficient selection, and reproducibility. The `examples/*.py` scripts also run as smoke tests: if they run, the kernel is healthy.
+This installs pytest and matplotlib. SoapySDR is deliberately not in the `dev` extra: it is a system library, and the suite runs on the simulation backend without it. Run the test suite with `pytest` from the repo root — 116 tests covering the kernel, the lattice machinery, coefficient selection, over-the-air federated learning, and reproducibility. The `examples/*.py` scripts also run as smoke tests: if they run, the kernel is healthy.
 
 ---
 
@@ -180,6 +181,7 @@ Once you can run the examples, work through the walkthroughs in order:
 3. [`docs/hello-world-fading-coefficients.md`](hello-world-fading-coefficients.md) — Tier 1.6, fading-channel coefficient selection (free, simulation)
 4. [`docs/hello-world-convolution.md`](hello-world-convolution.md) — Tier 2, wave-domain convolution (needs 1× HackRF + 1× RTL-SDR, ~$200 clone / ~$395 official)
 5. [`docs/hello-world-matrix-inversion.md`](hello-world-matrix-inversion.md) — Tier 3, matrix inversion (3 modes: free / $200 / $350)
+6. [`docs/hello-world-ota-federated-learning.md`](hello-world-ota-federated-learning.md) — Tier 4, over-the-air federated learning (free, simulation)
 
 Each walkthrough is self-contained: hardware list, parts costs, code, expected output, troubleshooting, safety.
 
