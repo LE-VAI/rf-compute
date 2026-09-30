@@ -28,7 +28,7 @@ jobs:
       - name: Test the built wheel (not the checkout)
         run: |
           python -m pip install dist/*.whl pytest
-          mkdir -p /tmp/wheeltest && cp -r tests /tmp/wheeltest/
+          mkdir -p /tmp/wheeltest && cp -r tests README.md /tmp/wheeltest/
           cd /tmp/wheeltest
           python -c "import rf_compute; assert 'site-packages' in rf_compute.__file__, rf_compute.__file__"
           python -m pytest -q -p no:cacheprovider tests

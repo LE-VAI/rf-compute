@@ -112,7 +112,8 @@ class TestData:
 class TestScoreline:
 
     @pytest.fixture(scope="class")
-    def severe(self):
+    @staticmethod
+    def severe():
         return scoreline(rounds=40, num_seeds=4, seed=0)
 
     def test_equalizer_matches_orthogonal_without_phase_sync(self, severe):
