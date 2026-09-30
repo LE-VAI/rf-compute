@@ -21,7 +21,7 @@ from .ota_fl import (
     make_federated_data, gradient_spread, ota_aggregate, aggregation_quality,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = [
     'Operator', 'AirCompOperator', 'LatticeAirCompOperator',
     'FadingAirCompOperator', 'OTAAggregationOperator',

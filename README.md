@@ -39,9 +39,9 @@ They all share one thing: **the waveform is the operand.** Nobody has built the 
 
 ---
 
-## The $350 hello world
+## The <span>$</span>350 hello world
 
-You don't need a fab, a clean room, or a metamaterial. You need **two transmit SDRs, one receive SDR, and a laptop** — clone-tier hardware gets you there around $350; official units run ~$725. Either way, the simulation kernel runs free on NumPy alone.
+You don't need a fab, a clean room, or a metamaterial. You need **two transmit SDRs, one receive SDR, and a laptop** — clone-tier hardware gets you there around <span>$</span>350; official units run ~<span>$</span>725. Either way, the simulation kernel runs free on NumPy alone.
 
 ```
 Tx1 ──┐
@@ -55,7 +55,7 @@ This is the simplest wave-compute primitive that exists. If you can run this, yo
 
 📖 **Full walkthrough:** [`docs/hello-world-aircomp.md`](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) — hardware, code, what to expect, troubleshooting
 
-**Budget option:** One HackRF + one RTL-SDR (clone-tier ~$190, official ~$380). You transmit x1, x2, and x1+x2 sequentially and compare captures in post-processing. You lose the simultaneity that makes AirComp profound, but you learn the signal-processing structure for half the cost. Details in the walkthrough.
+**Budget option:** One HackRF + one RTL-SDR (clone-tier ~<span>$</span>190, official ~<span>$</span>380). You transmit x1, x2, and x1+x2 sequentially and compare captures in post-processing. You lose the simultaneity that makes AirComp profound, but you learn the signal-processing structure for half the cost. Details in the walkthrough.
 
 ### Quick start (60 seconds, no hardware)
 
@@ -81,14 +81,14 @@ Six reproducible experiments, escalating in cost. Each maps to a peer-reviewed r
 
 | Tier | Experiment | Cost (clone-tier / official) | Proves | Citation |
 |---|---|---|---|---|
-| **1** | AirComp sum | ~$350 / ~$725 | Interference IS computation | Nazer & Gastpar, *IEEE TIT* (2011) |
+| **1** | AirComp sum | ~<span>$</span>350 / ~<span>$</span>725 | Interference IS computation | Nazer & Gastpar, *IEEE TIT* (2011) |
 | **1.5** | Lattice-coded AirComp | free (sim) | The exact result: noise-resilient sums in one channel use, no message decoded | Nazer & Gastpar, *IEEE TIT* (2007/2011) |
 | **1.6** | Fading-channel coefficients | free (sim) | Coefficients are an optimization: the plain sum is undecodable on ~95% of fading channels; selection finds a decodable one | Nazer & Gastpar (2011); Sahraei & Gastpar (2014); Liu & Ling, *IEEE TWC* (2016) |
-| **2** | Wave-domain convolution | ~$200 / ~$395 | Linear operators are native to wave physics | Silva et al., *Science* (2014) |
-| **3** | Matrix inversion via feedback | free / ~$200 / ~$350 | The wave domain solves equations; settling, not iterating | Tzarouchis, Edwards & Engheta, *Nature Communications* (2025) |
+| **2** | Wave-domain convolution | ~<span>$</span>200 / ~<span>$</span>395 | Linear operators are native to wave physics | Silva et al., *Science* (2014) |
+| **3** | Matrix inversion via feedback | free / ~<span>$</span>200 / ~<span>$</span>350 | The wave domain solves equations; settling, not iterating | Tzarouchis, Edwards & Engheta, *Nature Communications* (2025) |
 | **4** | Over-the-air federated learning | free (sim) | The channel aggregates model updates in `d+1` uses however many devices transmit; a shared pilot rescues training from misalignment, and heterogeneity bounds the rescue | Zhu, Wang & Huang, *IEEE TWC* (2020); Shao, Gündüz & Liew, *IEEE TWC* (2022) |
 
-Tier 3 has three modes (simulation free, software-in-the-loop ~$200 clone / ~$395 official, analog feedback ~$350 clone / ~$480 official) — see the walkthrough for the trade-off.
+Tier 3 has three modes (simulation free, software-in-the-loop ~<span>$</span>200 clone / ~<span>$</span>395 official, analog feedback ~<span>$</span>350 clone / ~<span>$</span>480 official) — see the walkthrough for the trade-off.
 
 📖 **Full ladder walkthroughs:** [Tier 1](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) · [Tier 1.5](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) · [Tier 1.6](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) · [Tier 2](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) · [Tier 3](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) · [Tier 4](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) — each with parts lists, code, and troubleshooting
 
@@ -128,20 +128,20 @@ If you read one document, read the field map.
 
 ## Hardware you'll need
 
-Prices verified 2026-08-31, re-checked 2026-09-30. HackRF One official retail is ~$340 (SparkFun/Adafruit have retired the unit; GSG's successor **HackRF Pro** is ~$400). AliExpress clones run ~$100–150 but degrade above 1 GHz per Great Scott Gadgets' own clone test — fine for sub-GHz learning experiments, not for precision work. RTL-SDR Blog V4 is end-of-line (May 2026); current official units are the V3 or V4L at ~$35–40 (the V4L is itself a limited edition with roughly a year of chip stock).
+Prices verified 2026-08-31, re-checked 2026-09-30. HackRF One official retail is ~<span>$</span>340 (SparkFun/Adafruit have retired the unit; GSG's successor **HackRF Pro** is ~<span>$</span>400). AliExpress clones run ~<span>$</span>100–150 but degrade above 1 GHz per Great Scott Gadgets' own clone test — fine for sub-GHz learning experiments, not for precision work. RTL-SDR Blog V4 is end-of-line (May 2026); current official units are the V3 or V4L at ~<span>$</span>35–40 (the V4L is itself a limited edition with roughly a year of chip stock).
 
 | Item | Tier 1 | Tier 2 | Tier 3 (Mode B/C) | Official | Clone-tier |
 |---|:---:|:---:|:---:|---|---|
-| HackRF One SDR (Tx) | ×2 | ×1 | ×1 | ~$340 each | ~$100–150 each |
-| RTL-SDR (Rx, receive-only) | ×1 | ×1 | ×1 | ~$35–40 | ~$30 |
-| 10 MHz clock sync cable (BNC/SMA) | ✓ | | | ~$5 | — |
+| HackRF One SDR (Tx) | ×2 | ×1 | ×1 | ~<span>$</span>340 each | ~<span>$</span>100–150 each |
+| RTL-SDR (Rx, receive-only) | ×1 | ×1 | ×1 | ~<span>$</span>35–40 | ~<span>$</span>30 |
+| 10 MHz clock sync cable (BNC/SMA) | ✓ | | | ~<span>$</span>5 | — |
 | Laptop (any OS) | ✓ | ✓ | ✓ | you have one | — |
-| Passive scatterer / reflector | | ✓ (Mode B) | | ~$10–20 | DIY |
-| RF circulator (one-way loop) | | | ✓ (Mode C) | ~$40 | — |
-| Programmable attenuator (loop gain) | | | ✓ (Mode C) | ~$30 | — |
-| RF splitter/combiner | | | ✓ (Mode C) | ~$15–25 | — |
+| Passive scatterer / reflector | | ✓ (Mode B) | | ~<span>$</span>10–20 | DIY |
+| RF circulator (one-way loop) | | | ✓ (Mode C) | ~<span>$</span>40 | — |
+| Programmable attenuator (loop gain) | | | ✓ (Mode C) | ~<span>$</span>30 | — |
+| RF splitter/combiner | | | ✓ (Mode C) | ~<span>$</span>15–25 | — |
 
-**Total entry cost: free (Tier 3 sim) / clone-tier ~$200–350 / official ~$390–725 depending on tier.** No fab. No clean room. No metamaterial. Tier 3 Mode A is pure simulation and costs nothing — start there to see the math before buying hardware. If you buy clones, know what you're buying: they work for learning, they drift for precision.
+**Total entry cost: free (Tier 3 sim) / clone-tier ~<span>$</span>200–350 / official ~<span>$</span>390–725 depending on tier.** No fab. No clean room. No metamaterial. Tier 3 Mode A is pure simulation and costs nothing — start there to see the math before buying hardware. If you buy clones, know what you're buying: they work for learning, they drift for precision.
 
 ---
 
@@ -152,7 +152,7 @@ Prices verified 2026-08-31, re-checked 2026-09-30. HackRF One official retail is
 - **Educators** who want reproducible experiments with real citations
 - **Curious engineers** who read "the channel is the adder" and want to see it work
 
-If you've never heard of RF-as-compute and want to understand it: start with the $350 hello world. If you're already in one of the four lineages: the field map is the bridge to the other three.
+If you've never heard of RF-as-compute and want to understand it: start with the <span>$</span>350 hello world. If you're already in one of the four lineages: the field map is the bridge to the other three.
 
 ---
 
@@ -177,12 +177,12 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 **Pre-release.** The spine is complete: field map, six-tier hello-world ladder, annotated bibliography, contribution guide, and the SDR kernel abstraction. The simulation kernel is fully reproducible (every run seed-deterministic; 116 tests).
 
 - ✅ [Field map](https://github.com/LE-VAI/rf-compute/blob/main/docs/field-map.md) — the spine document
-- ✅ [Tier 1: AirComp sum](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) — the $350 hello world
-- ✅ [Tier 1.5: Lattice-coded AirComp](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) — the $0 exact-computation primitive (nested-lattice kernel)
-- ✅ [Tier 1.6: Fading-channel coefficients](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) — the $0 coefficient-selection tier (computation-rate maximization, MMSE α, LLL + norm-bound search)
-- ✅ [Tier 2: Wave-domain convolution](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) — the $200 linear-operator primitive
-- ✅ [Tier 3: Matrix inversion via feedback](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — the wave-domain capstone (free / $200 / $350)
-- ✅ [Tier 4: Over-the-air federated learning](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) — the AirComp capstone ($0): aggregation over the air, misalignment, and a pilot-aided equalizer
+- ✅ [Tier 1: AirComp sum](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) — the <span>$</span>350 hello world
+- ✅ [Tier 1.5: Lattice-coded AirComp](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) — the <span>$</span>0 exact-computation primitive (nested-lattice kernel)
+- ✅ [Tier 1.6: Fading-channel coefficients](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) — the <span>$</span>0 coefficient-selection tier (computation-rate maximization, MMSE α, LLL + norm-bound search)
+- ✅ [Tier 2: Wave-domain convolution](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) — the <span>$</span>200 linear-operator primitive
+- ✅ [Tier 3: Matrix inversion via feedback](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — the wave-domain capstone (free / <span>$</span>200 / <span>$</span>350)
+- ✅ [Tier 4: Over-the-air federated learning](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) — the AirComp capstone (<span>$</span>0): aggregation over the air, misalignment, and a pilot-aided equalizer
 - ✅ [Annotated bibliography](https://github.com/LE-VAI/rf-compute/blob/main/docs/bibliography.md) — every citation, reading order, how to use it
 - ✅ [Installation guide](https://github.com/LE-VAI/rf-compute/blob/main/docs/INSTALL.md) — pip install, SDR drivers, troubleshooting
 - ✅ [Contributing guide](https://github.com/LE-VAI/rf-compute/blob/main/CONTRIBUTING.md) — the reproducibility + provenance + honesty bar
