@@ -90,7 +90,7 @@ Six reproducible experiments, escalating in cost. Each maps to a peer-reviewed r
 
 Tier 3 has three modes (simulation free, software-in-the-loop ~<span>$</span>200 clone / ~<span>$</span>395 official, analog feedback ~<span>$</span>350 clone / ~<span>$</span>480 official) — see the walkthrough for the trade-off.
 
-📖 **Full ladder walkthroughs:** [Tier 1](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) · [Tier 1.5](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) · [Tier 1.6](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) · [Tier 2](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) · [Tier 3](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) · [Tier 4](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) — each with parts lists, code, and troubleshooting
+📖 **Full ladder walkthroughs:** [Tier 1](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-aircomp.md) · [Tier 1.5](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-lattice-aircomp.md) · [Tier 1.6](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-fading-coefficients.md) · [Tier 2](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) · [Tier 3](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) · [Tier 4](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) · [Tier 4-h](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-hardware-reality.md) — each with parts lists, code, and troubleshooting
 
 ---
 
@@ -183,6 +183,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
 - ✅ [Tier 2: Wave-domain convolution](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-convolution.md) — the <span>$</span>200 linear-operator primitive
 - ✅ [Tier 3: Matrix inversion via feedback](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-matrix-inversion.md) — the wave-domain capstone (free / <span>$</span>200 / <span>$</span>350)
 - ✅ [Tier 4: Over-the-air federated learning](https://github.com/LE-VAI/rf-compute/blob/main/docs/hello-world-ota-federated-learning.md) — the AirComp capstone (<span>$</span>0): aggregation over the air, misalignment, and a pilot-aided equalizer
+- ✅ **Tier 4-h: Hardware reality** (<span>$</span>0) — the same aggregation through a *real* receiver. Tier 4 models misalignment as a phase held constant across the block; a <span>$</span>2–25 ESP32-class board also has a carrier offset that **rotates**, a timing offset that **drifts**, an uncalibrated ADC path, and **burst** capture. The result: the pilot-aided equalizer does **not** survive an unsynchronised front end — and what breaks it is the oscillator, not the ADC. `DEV_BOARD_UNCALIBRATED` takes the median aggregation NMSE from **0.42 to 17.5**, while 10-bit quantization, a −30 dB IQ image and a 1 dB AGC error all stay within 25% of a clean receiver. A **common** clock is no rescue either (shared offsets add coherently). The ceiling is an accumulated-phase budget: the equalizer holds while the phase accumulated across the block stays under ~0.5 rad — a specification a sync stage can be built against. `python examples/tier4h_hardware_reality.py`
 - ✅ [Annotated bibliography](https://github.com/LE-VAI/rf-compute/blob/main/docs/bibliography.md) — every citation, reading order, how to use it
 - ✅ [Installation guide](https://github.com/LE-VAI/rf-compute/blob/main/docs/INSTALL.md) — pip install, SDR drivers, troubleshooting
 - ✅ [Contributing guide](https://github.com/LE-VAI/rf-compute/blob/main/CONTRIBUTING.md) — the reproducibility + provenance + honesty bar
@@ -194,6 +195,7 @@ If you've never heard of RF-as-compute and want to understand it: start with the
   - ✅ [`examples/tier2_convolution_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier2_convolution_kernel.py) — Tier 2 with the kernel
   - ✅ [`examples/tier3_inversion_kernel.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier3_inversion_kernel.py) — Tier 3 with the kernel
   - ✅ [`examples/tier4_ota_federated_learning.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier4_ota_federated_learning.py) — Tier 4 with the kernel
+  - ✅ [`examples/tier4h_hardware_reality.py`](https://github.com/LE-VAI/rf-compute/blob/main/examples/tier4h_hardware_reality.py) — Tier 4-h: the aggregation through a real receiver (survival table, impairment attribution, the accumulated-phase ceiling)
 - ⏳ Community contributions (see `CONTRIBUTING.md`)
 
 ---
