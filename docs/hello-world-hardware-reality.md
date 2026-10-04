@@ -130,6 +130,73 @@ stale before its own data segment begins.
 
 ---
 
+## The fix: a tracking receiver, and where it stops
+
+The ceiling above is a property of the **block-fit receiver**, not of the
+channel — and the way to show that is to build the receiver a real burst modem
+would use. `receiver='tracking'` is a **second-order decision-directed
+phase-locked loop**: it acquires on the known midamble, then tracks the
+aggregate phase symbol by symbol.
+
+**Why second order.** A residual carrier offset is a constant *frequency* error,
+not a constant phase error. A first-order loop (phase accumulator only) has a
+non-zero steady-state phase error under a frequency error — it lags for ever. The
+integral term estimates the frequency itself, so a constant rotation is tracked
+with **zero steady-state error**. That is the specific machinery the block fit
+lacks.
+
+The loop removes the **rotation**; a two-tap deconvolution on the de-rotated
+stream then removes the **ISI**. Splitting the job that way is what a real
+receiver does, and it matters: tracking phase alone leaves the ISI term
+untouched, which is a mistake worth naming because an early version of this
+receiver made it and failed *even with no carrier offset at all*.
+
+### What it rescues
+
+| common CFO | accumulated | equalized | **tracking** |
+|---|---|---|---|
+| 0.00 | 0.00 rad | 0.446 | 0.579 |
+| 0.05 | 1.00 rad | 0.812 | **0.554** |
+| 0.10 | 2.00 rad | 2.862 | **0.545** |
+| 0.20 | 4.00 rad | 8.558 | **0.624** |
+| 0.35 | 7.00 rad | 22.682 | **0.632** |
+| 0.50 | 10.00 rad | 48.631 | 1.016 |
+
+**A properly tuned tracking loop clears 7 radians of accumulation — 14× past
+the block fit's half-radian wall.** The half-radian budget is therefore a
+property of the *toy receiver*, not of the channel. That is the answer to the
+question this tier raised.
+
+**Loop gain is a real design parameter, not a formality.** The same loop with a
+conservatively narrow gain (`kp=0.25, ki=0.01`) *also* fails at 0.35 rad/symbol.
+"Add a tracking loop" is only true of a properly tuned loop; a narrow one is the
+same trap in a different costume. The default here is `kp=0.8, ki=0.2`.
+
+### What it still cannot do — the structural limit
+
+A single-phase tracker follows **one** rotation. Independent per-device offsets
+give every device its own, so the tracked phase is a compromise rather than a
+fix:
+
+| scenario | equalized | tracking |
+|---|---|---|
+| no CFO | 0.439 | 0.576 |
+| **common** 0.10 (one rotation) | 2.926 | **0.545** |
+| **independent** 0.05 (19 rotations) | 1.294 | 1.215 |
+| **independent** 0.35 | 7.178 | 4.677 |
+
+This is *not* because the information is destroyed. Measuring the coherence of
+the superposition, `|Σ_k e^{iθ_k}|/K`, shows independent offsets barely touch it
+— **0.2123 clean vs 0.1994 with independent CFO at 0.35**, a 6% loss. The sum
+survives; the limit is the receiver's, not the medium's.
+
+Which sharpens the Tier 4-h conclusion rather than softening it: **the sync
+target is zero residual offset, not merely a small spread.** A common rotation is
+a solved problem — a tuned loop tracks it. A *spread* is not, and that is what
+"unsynchronised nodes" actually means.
+
+---
+
 ## The counterintuitive result
 
 The obvious reading of the survival table is "the boards need to be
@@ -157,24 +224,27 @@ that disagree.
 - The pilot-aided equalizer Tier 4 ships **does not survive** a real
   ESP32-class front end, and the reason is the oscillator.
 - The failure is **predictable and bounded**: an accumulated-phase budget of
-  roughly half a radian per block.
-- A sync stage for this hardware class has a **specification**, and it is not
-  "make the clocks agree." It is *hold the residual phase across one block under
-  half a radian* — which for a 20-symbol block at 2.4 GHz is a residual offset
-  in the low tens of kHz.
+  roughly half a radian per block **for the block-fit receiver**.
+- **That budget is a receiver property, not a channel property.** A properly
+  tuned second-order tracking loop clears 7 radians of accumulation — 14× the
+  block fit's wall — and the loop gain has to be right, not merely present.
+- What no single-phase receiver fixes is a **spread** of independent offsets,
+  and the decoherence measurement shows why the blame is architectural: the
+  superposition survives (coherence 0.212 → 0.199), so the information is there
+  to be had by a receiver that can track more than one phase.
 - The receiver-chain concerns (ADC depth, IQ image, AGC) are **not** the binding
   constraint. Effort spent there is effort not spent on the LO.
 
 ## What this does NOT prove
 
-- That any specific board misses the budget. The presets are assumptions. **The
-  single most valuable next measurement is the residual CFO of real
-  synchronised hardware** — that one number decides whether the bridge needs a
-  tracking receiver or a better oscillator.
-- That a real receiver cannot do better. A whitened matched filter with
-  oversampling, or a per-symbol phase-tracking loop with decision feedback, is
-  strictly stronger than the two-tap block fit tested here. The claim is about
-  *this* receiver, which is the one the package ships.
+- That any specific board misses any particular budget. The presets are
+  assumptions. **The two most valuable next measurements are the residual CFO of
+  real synchronised hardware, and how much of it is common versus spread** —
+  those two numbers decide whether the bridge needs a better oscillator, a tuned
+  tracking loop, or a multi-phase receiver.
+- That a real receiver cannot do better than a *single* tracking loop. A
+  multi-phase or per-device estimator is the natural next rung and is not built
+  here; the independent-offset result bounds *this* receiver, not the art.
 - That burst capture is fatal. It costs ~10× on its own and compounds the CFO
   failure, but it is second-order to the oscillator.
 
@@ -182,33 +252,39 @@ that disagree.
 
 ## The engineering consequence
 
-The 26 tests in `tests/test_hardware.py` pin these claims as **orderings and
+The 33 tests in `tests/test_hardware.py` pin these claims as **orderings and
 ratios**, not magic constants, so a change that breaks the physics fails while a
-change that merely reshuffles random draws does not. Four of them are worth
-knowing by name:
+change that merely reshuffles random draws does not. Six are worth knowing by
+name:
 
 - `test_cfo_is_the_dominant_impairment` — CFO over 5× clean; ADC, IQ and AGC
   within 25% of clean.
 - `test_common_clock_is_not_a_free_rescue` — shared offsets are worse than
-  independent ones.
-- `test_equalizer_holds_under_half_a_radian_accumulated` — the budget, crossed
-  from both sides.
-- `test_tracking_does_not_rescue_a_severe_offset` — so nobody re-derives the
-  failure and believes they found the fix.
+  independent ones for the *block fit*.
+- `test_equalizer_holds_under_half_a_radian_accumulated` — the block-fit budget,
+  crossed from both sides.
+- `test_tracking_rescues_a_common_rotation` — the tuned loop clears what the
+  block fit cannot (22.7 → under 0.75 at 7 rad accumulated).
+- `test_loop_gain_is_a_real_parameter_not_a_formality` — a narrow loop fails
+  where a tuned one holds.
+- `test_tracking_cannot_rescue_independent_offsets` — the structural limit, with
+  `test_per_device_offsets_do_not_destroy_the_superposition` pinning the
+  *mechanism* (the sum survives; the receiver is what cannot cope).
 
 ## Going deeper
 
+- **Multi-phase estimation.** The independent-offset result is a bound on a
+  *single*-phase tracker. The channel coherence measurement says the information
+  survives, so a receiver that models several phase trajectories — or estimates
+  them per device from the aggregate — is the natural next rung and is genuinely
+  open here.
 - **The stronger receivers.** Shao, Gündüz & Liew 2022 (`hku-icl/MisAlignedOAC`)
   oversample with a whitened matched filter and decode with aligned-sample or
-  sum-product ML estimators. Adding those would establish whether the
-  half-radian budget is a property of the *channel* or of the *toy receiver* —
-  a genuinely open question here.
-- **Per-symbol phase tracking.** The natural next receiver: a decision-directed
-  loop that tracks phase continuously rather than fitting taps per sub-block.
-  That is what a real modem does, and the toy block fit is deliberately weaker.
+  sum-product ML estimators. Those would establish whether the residual gap at
+  high CFO is a timing problem, a loop-bandwidth problem, or something else.
 - **The measurement.** The bridge work this tier exists to specify: capture a
-  real synchronised pair, measure residual CFO, and replace the presets with
-  bench data. Everything above is a model until that number exists.
+  real synchronised pair, measure residual CFO, and split it into common and
+  spread components. Everything above is a model until those numbers exist.
 
 ## Safety and legality
 

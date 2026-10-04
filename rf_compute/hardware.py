@@ -471,6 +471,79 @@ def _solve_segment(r_seg, c0, c1, n, eta, prior_pilot_symbol):
     return np.linalg.lstsq(A_real, b_real, rcond=None)[0]
 
 
+def _pll_track(r_pilot, pilot, r_data, n_data, *, eta_p, eta,
+               kp: float = 0.8, ki: float = 0.2):
+    """
+    Second-order decision-directed phase-locked loop across a midamble and the
+    data segment that follows it. Returns the de-rotated pilot and data samples.
+
+    Why SECOND-order, and why that is the whole point
+    ------------------------------------------------
+    A residual carrier offset is a constant FREQUENCY error, not a constant phase
+    error. A first-order loop (phase accumulator only) has a non-zero steady-state
+    phase error under a frequency error — it lags for ever. A second-order loop
+    adds an integral term that estimates the frequency itself, so a constant
+    rotation is tracked with zero steady-state error. That is why every real burst
+    modem uses one, and it is exactly the machinery the block-fit equalizer lacks.
+
+    Acquisition is data-aided: during the midamble the symbols are known, so the
+    phase detector uses them directly. Through the data the detector becomes
+    decision-directed — the current real estimate serves as its own reference.
+    Like all decision-feedback loops it can slip when a decision is wrong; the loop
+    gain trades acquisition speed against that risk.
+
+    Loop gain is a DESIGN PARAMETER, not a constant. With the default
+    kp=0.8, ki=0.2 the loop holds an aggregate rotation of 0.35 rad/symbol — the
+    severe case the block-fit equalizer fails at 6.9. The same loop with a
+    conservatively narrow gain (kp=0.25, ki=0.01) fails there too, which is worth
+    knowing: "the tracking loop rescues it" is only true of a properly tuned loop,
+    and a narrow one is the same trap in a different costume.
+
+    What this loop does NOT do: remove inter-symbol interference. It removes the
+    ROTATION. ISI is left to the deconvolution stage that follows, which is how a
+    real receiver splits the job — a tracking loop for phase, an equalizer for the
+    channel. `_solve_segment` on the de-rotated stream is that equalizer.
+    """
+    r_pilot = np.asarray(r_pilot, dtype=np.complex128).ravel()
+    pilot = np.asarray(pilot, dtype=np.float64).ravel()
+    m = int(min(r_pilot.size, pilot.size))
+    r_pilot, pilot = r_pilot[:m], pilot[:m]
+
+    A_p = float(np.mean(np.abs(r_pilot))) if m else 1.0
+    if not np.isfinite(A_p) or A_p <= 0.0:
+        A_p = 1.0
+    A_d = A_p * np.sqrt(eta / eta_p) if eta_p > 0 else A_p
+
+    theta, omega = 0.0, 0.0
+    phase_pilot = np.zeros(m)
+    if m:
+        theta = float(np.angle(r_pilot[0] * np.conj(pilot[0])))
+        phase_pilot[0] = theta
+        for i in range(1, m):
+            y = r_pilot[i] * np.exp(-1j * theta)
+            e = (y.imag / A_d) * pilot[i]          # dimensionless, ~radians
+            theta += omega + kp * e
+            omega += ki * e
+            phase_pilot[i] = theta
+
+    n = int(n_data)
+    phase_data = np.empty(n)
+    theta_here = theta
+    omega_here = omega
+    for j in range(n):
+        phase_data[j] = theta_here
+        y = r_data[j] * np.exp(-1j * theta_here)
+        # Decision-directed phase detector: the sign of the current estimate is
+        # the reference. BPSK-like, which is what a real-valued gradient gives.
+        d = 1.0 if y.real >= 0.0 else -1.0
+        e = (y.imag / A_d) * d
+        theta_here += omega_here + kp * e
+        omega_here += ki * e
+
+    return r_pilot * np.exp(-1j * phase_pilot), \
+        np.asarray(r_data)[:n] * np.exp(-1j * phase_data)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # The impaired aggregation
 # ─────────────────────────────────────────────────────────────────────────────
@@ -479,24 +552,33 @@ def ota_aggregate_hardware(grads, *, cfg: HardwareImpairments, snr_db: float = 1
                            rng=None, truncation: float = 0.3, clip: float = 1.0,
                            max_phase: float = 0.0, max_timing: float = 0.0,
                            receiver: str = 'equalized', pilot_len: int = 32,
-                           sub_blocks: int = 1) -> dict:
+                           sub_blocks: int = 1, pll_kp: float = 0.8,
+                           pll_ki: float = 0.2) -> dict:
     """
     One over-the-air aggregation round through a REAL receiver.
 
     Same structure and same return keys as `ota_fl.ota_aggregate` — same fading,
-    same truncated channel inversion, same two receivers — with `cfg`'s
+    same truncated channel inversion, same receivers — with `cfg`'s
     impairments inserted where physics puts them:
 
         per device, before the sum : CFO ramp, phase-noise walk, sampling drift
         once, after the sum        : IQ image, AGC error, ADC depth, burst gaps
 
-    `sub_blocks` is the receiver fix. At 1 the transmitter sends one pilot and
-    then the whole gradient, and the receiver fits ONE pair of taps and holds it
-    across the block — Tier 4's design, and the reason its taps go stale under
-    drift. At n > 1 the transmission is divided into n data sub-blocks, each
-    preceded by its own short midamble, so the receiver re-measures the taps close
-    to where it uses them. That is the standard cellular construction (LTE/NR
-    DMRS), and `overhead_table` prices what it costs.
+    Three receivers and two transmitter framings:
+
+      'naive'      reads the superposition as if aligned. Fails under any
+                   misalignment, as Tier 4 documents.
+      'equalized'  fits ONE pair of aggregate taps from a midamble and holds them
+                   across the block. Exact only while the taps are constant, which
+                   is why it goes stale under a rotating phase.
+      'tracking'   a second-order decision-directed PLL that acquires on the
+                   midamble and then tracks the aggregate phase symbol by symbol.
+                   This is the receiver a real burst modem uses, and it is the one
+                   that can follow a rotation rather than assuming it away.
+
+    `sub_blocks` applies to 'equalized': at 1 the midamble is sent once; at n > 1
+    the frame is divided into n data segments, each with its own midamble, so the
+    taps are re-measured close to where they are used. `overhead_table` prices it.
 
     Returns the `ota_aggregate` dict plus:
         'coverage'     fraction of sample windows actually captured
@@ -505,8 +587,9 @@ def ota_aggregate_hardware(grads, *, cfg: HardwareImpairments, snr_db: float = 1
     """
     if rng is None:
         rng = np.random.default_rng()
-    if receiver not in ('naive', 'equalized'):
-        raise ValueError(f"receiver '{receiver}' not supported; use 'naive' or 'equalized'")
+    if receiver not in ('naive', 'equalized', 'tracking'):
+        raise ValueError(
+            f"receiver '{receiver}' not supported; use 'naive', 'equalized' or 'tracking'")
     if sub_blocks < 1:
         raise ValueError("sub_blocks must be >= 1")
 
@@ -579,22 +662,47 @@ def ota_aggregate_hardware(grads, *, cfg: HardwareImpairments, snr_db: float = 1
 
     # ── receivers
     #
-    # One pass down the frame. The only state that carries is the most recent
-    # fitted tap pair and the symbol that immediately preceded the current
-    # segment — the midamble's last symbol, which is what leaks into the
-    # segment's first window.
+    # One pass down the frame. For the block-fit receivers the only state that
+    # carries is the most recent tap pair and the symbol that immediately
+    # preceded the current segment — the midamble's last symbol, which is what
+    # leaks into the segment's first window. The tracking receiver instead
+    # carries a phase and a frequency estimate, because it follows the rotation
+    # rather than assuming it away.
     estimate = np.zeros(d)
     cursor = 0
     taps = None
     prior_symbol = 0.0
+    pending_pilot = None
     for kind, sym, start, n in frame:
         seg = r_all[cursor:cursor + n]
         if kind == 'pilot':
             if receiver == 'equalized':
                 taps = _fit_two_taps(seg, sym[0, :], eta_p)
+            else:
+                pending_pilot = (seg, sym[0, :])
         else:
             if receiver == 'naive':
                 estimate[start:start + n] = seg.real / np.sqrt(eta) / n_active
+            elif receiver == 'tracking':
+                if pending_pilot is None:
+                    # No midamble seen yet: fall back to reading the raw
+                    # superposition rather than refusing to produce output.
+                    estimate[start:start + n] = seg.real / np.sqrt(eta) / n_active
+                else:
+                    # Split the job the way a real receiver does: the PLL removes
+                    # the ROTATION, then a two-tap deconvolution on the de-rotated
+                    # stream removes the ISI. Tracking phase alone would leave the
+                    # ISI term untouched, which is what made an earlier version of
+                    # this receiver fail even with no carrier offset at all.
+                    rp, p = pending_pilot
+                    rp_derot, rd_derot = _pll_track(
+                        rp, p, seg, n, eta_p=eta_p, eta=eta,
+                        kp=pll_kp, ki=pll_ki)
+                    c0, c1 = _fit_two_taps(rp_derot, p, eta_p)
+                    prior_rot = prior_symbol * np.exp(
+                        -1j * float(np.angle(rp_derot[-1] * np.conj(p[-1]))))
+                    estimate[start:start + n] = _solve_segment(
+                        rd_derot, c0, c1, n, eta, prior_rot)
             else:
                 c0, c1 = taps if taps is not None else (1.0 + 0j, 0.0 + 0j)
                 estimate[start:start + n] = _solve_segment(

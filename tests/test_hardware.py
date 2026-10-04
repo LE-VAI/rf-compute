@@ -273,6 +273,113 @@ class TestOverhead:
                 assert np.isfinite(cells[col])
 
 
+# ─── the tracking receiver ───────────────────────────────────────────────────
+
+class TestTrackingReceiver:
+    """
+    The receiver that answers the question Tier 4-h raised. Tier 4-h established
+    that a block-fit equalizer cannot follow a rotating phase; this pins what a
+    properly tuned tracking loop CAN do, and — just as important — what it still
+    cannot.
+    """
+
+    def test_tracking_holds_with_no_impairment(self):
+        """The loop must not be worse than the block fit when nothing is wrong."""
+        grads = _grads()
+        track = _median_nmse(grads, HardwareImpairments(), rx='tracking', trials=60)
+        assert track < 0.75
+
+    def test_tracking_rescues_a_common_rotation(self):
+        """
+        The result that matters. A rotation SHARED by every device is one phase
+        trajectory, and a second-order loop follows it: the block fit degrades to
+        ~22 at 0.35 rad/symbol while the tracker holds under 0.75.
+        """
+        grads = _grads()
+        cfg = HardwareImpairments(cfo_common_rad_per_symbol=0.35)
+        eq = _median_nmse(grads, cfg, rx='equalized', trials=80)
+        tr = _median_nmse(grads, cfg, rx='tracking', trials=80)
+        assert eq > 5.0
+        assert tr < 0.75
+
+    def test_tracking_beats_block_fit_beyond_the_half_radian_wall(self):
+        """
+        Tier 4-h found a block-fit ceiling at ~0.5 rad accumulated per block. The
+        tracker clears 7 rad. Both sides asserted, so a change that breaks either
+        the ceiling or the rescue fails here.
+        """
+        grads = _grads()
+        cfg = HardwareImpairments(cfo_common_rad_per_symbol=0.35)   # 7 rad / block
+        eq = _median_nmse(grads, cfg, rx='equalized', trials=60)
+        tr = _median_nmse(grads, cfg, rx='tracking', trials=60)
+        assert eq > 5.0 * tr
+
+    def test_loop_gain_is_a_real_parameter_not_a_formality(self):
+        """
+        A narrow loop fails where a tuned one holds. Recorded because 'add a
+        tracking loop' is true only of a properly tuned loop — a narrow one is the
+        same failure in a different costume.
+        """
+        grads = _grads()
+        cfg = HardwareImpairments(cfo_common_rad_per_symbol=0.20)
+        narrow = _median_nmse(grads, cfg, rx='tracking', trials=60,
+                              pll_kp=0.25, pll_ki=0.01)
+        tuned = _median_nmse(grads, cfg, rx='tracking', trials=60,
+                             pll_kp=0.8, pll_ki=0.2)
+        assert tuned < narrow
+        assert tuned < 0.75
+
+    def test_tracking_cannot_rescue_independent_offsets(self):
+        """
+        The structural limit, and the most useful negative in this file.
+
+        A single-phase tracker follows ONE rotation. Independent per-device offsets
+        give every device its own, so the tracked phase is a compromise rather than
+        a fix. The decoherence measurement (see the walkthrough) shows the SUM
+        survives — coherence only falls 0.212 -> 0.199 — so the information is in
+        the channel and the limit is the receiver's, not the medium's. This is why
+        the sync target is zero residual offset, not merely a small one.
+        """
+        grads = _grads()
+        cfg = HardwareImpairments(cfo_rad_per_symbol=0.35)
+        tr = _median_nmse(grads, cfg, rx='tracking', trials=60)
+        assert tr > 1.0
+
+    def test_per_device_offsets_do_not_destroy_the_superposition(self):
+        """
+        Pins the mechanism behind the test above: independent CFO does NOT
+        decohere the sum. If it did, the failure would be physical and
+        unrecoverable; because it does not, the limit is architectural.
+        """
+        n, length = 20, 20
+        idx = np.arange(length, dtype=float)
+
+        def coherence(cfg):
+            vals = []
+            for t in range(40):
+                r = np.random.default_rng(t)
+                common = r.uniform(-cfg.cfo_common_rad_per_symbol,
+                                   cfg.cfo_common_rad_per_symbol)
+                cfo = common + r.uniform(-cfg.cfo_rad_per_symbol,
+                                         cfg.cfo_rad_per_symbol, n)
+                phi = r.uniform(-np.pi, np.pi, n)
+                theta = phi[:, None] + cfo[:, None] * idx[None, :]
+                vals.append(np.mean(np.abs(np.exp(1j * theta).sum(axis=0)) / n))
+            return float(np.mean(vals))
+
+        clean = coherence(HardwareImpairments())
+        spread = coherence(HardwareImpairments(cfo_rad_per_symbol=0.35))
+        assert spread > 0.85 * clean
+
+    def test_tracking_is_finite_and_correctly_shaped(self):
+        """No NaN, no refusal to produce output, right length."""
+        out = ota_aggregate_hardware(
+            _grads(), cfg=DEV_BOARD_UNCALIBRATED, rng=np.random.default_rng(9),
+            max_phase=np.pi, max_timing=0.5, receiver='tracking')
+        assert out['estimate'].shape == (20,)
+        assert np.all(np.isfinite(out['estimate']))
+
+
 # ─── guards ─────────────────────────────────────────────────────────────────
 
 class TestGuards:

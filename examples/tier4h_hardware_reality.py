@@ -99,24 +99,54 @@ for cfo in (0.0, 0.01, 0.02, 0.04, 0.08, 0.15, 0.35):
     verdict = 'holds' if m < 0.6 else ('degraded' if m < 1.0 else 'FAILS')
     print(f"   {cfo:>12.3f}{cfo * d:>14.2f} rad{m:>9.3f}   {verdict}")
 
+# ── 4. The fix, and where it stops ─────────────────────────────────────────
+print("\n4. A tracking receiver: what it rescues, and what it cannot")
+print("   'equalized' fits one pair of taps and holds them. 'tracking' is a")
+print("   second-order decision-directed PLL that follows the rotation.")
+
+
+def _row(cfg, label):
+    e = _med(cfg, rx='equalized')
+    t = _med(cfg, rx='tracking')
+    print(f"   {label:<34}{e:>11.3f}{t:>10.3f}")
+
+
+print(f"   {'scenario':<34}{'equalized':>11}{'tracking':>10}")
+print("   " + "-" * 55)
+_row(HardwareImpairments(), 'no CFO (reference)')
+_row(HardwareImpairments(cfo_common_rad_per_symbol=0.10), 'COMMON 0.10 (one rotation)')
+_row(HardwareImpairments(cfo_common_rad_per_symbol=0.35), 'COMMON 0.35 (7 rad/block)')
+_row(HardwareImpairments(cfo_rad_per_symbol=0.05), 'INDEPENDENT 0.05 (19 rotations)')
+_row(HardwareImpairments(cfo_rad_per_symbol=0.35), 'INDEPENDENT 0.35')
+
+print("""
+   A tuned tracking loop clears 7 rad of accumulated phase - 14x past the block
+   fit's half-radian wall. So that budget is a property of the TOY RECEIVER, not
+   of the channel. But a single-phase tracker follows ONE rotation: independent
+   per-device offsets give every device its own, and the tracked phase becomes a
+   compromise. That limit is architectural, not physical - the superposition
+   itself barely decoheres (0.212 -> 0.199), so the information is there for a
+   receiver that can track more than one phase.""")
+
 print("""
 What the numbers say:
   - The equalizer holds while the phase accumulated across the block stays
     under roughly half a radian. Above that it fails, and no amount of
     re-piloting saves it: at 0.35 rad/symbol the coherence time is about
     1.4 symbols, so every midamble is stale before its own data starts.
-  - A COMMON carrier offset is not a rescue. Shared offsets add coherently,
-    so a common offset can be WORSE than independent ones, which partially
-    average out. Synchronise to zero residual offset, not to a common one.
+  - A tracking receiver fixes that - but only a TUNED one. The same loop with a
+    narrow gain (kp=0.25, ki=0.01) fails where kp=0.8, ki=0.2 holds.
+  - A COMMON carrier offset is not the whole story. For the block fit, shared
+    offsets add coherently and can be WORSE than independent ones (22.7 vs 7.2
+    at 0.35). For a tracker it is the reverse: one shared rotation is exactly
+    what a single-phase loop can follow.
   - What does NOT matter, at these power levels: 10-bit quantization, a -30 dB
     IQ image, and a 1 dB AGC error are all within 25% of a clean float receiver.
     The receiver-chain worries are not the binding constraint. The oscillator is.
-  - Burst capture is the second-order term: dropped windows cost real accuracy,
-    and on a board with no sync at all they compound the CFO failure.
 
-The engineering consequence: a sync stage for this class of hardware has a
-specification, and it is not 'make the clocks agree'. It is 'hold the residual
-phase across one block under half a radian' - which for a 20-symbol block at
-2.4 GHz is a residual offset in the low tens of kHz. That is a number a bench
-can be built against, and it is the first thing the bridge work should measure.
+The engineering consequence: the sync target is ZERO RESIDUAL OFFSET, not a
+common one and not merely a small spread. A common rotation is a solved problem
+- a tuned loop tracks it. A spread is not, and that is what 'unsynchronised
+nodes' actually means. The two numbers a bench must produce are the residual CFO
+of synchronised hardware, and how much of it is common versus per-device.
 """)
