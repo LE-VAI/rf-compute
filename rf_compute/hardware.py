@@ -471,6 +471,30 @@ def _solve_segment(r_seg, c0, c1, n, eta, prior_pilot_symbol):
     return np.linalg.lstsq(A_real, b_real, rcond=None)[0]
 
 
+def _solve_segment_varying(r_seg, g0, g1, n, eta, prior_symbol):
+    """
+    Two-tap deconvolution with a DIFFERENT tap pair at every window: the
+    combined channel as it actually is at each sample, rather than one pair
+    fitted from a midamble and held. Used only by the genie receiver, which is
+    handed g0[j], g1[j] instead of estimating them.
+    """
+    if n <= 0:
+        return np.zeros(0)
+    r = np.asarray(r_seg)[:n]
+    if r.size < n:
+        r = np.concatenate([r, np.zeros(n - r.size)])
+    T = np.zeros((n, n), dtype=np.complex128)
+    ii = np.arange(n)
+    T[ii, ii] = g0[:n]
+    if n > 1:
+        T[ii[1:], ii[:-1]] = g1[1:n]
+    b = r / np.sqrt(eta)
+    b[0] -= g1[0] * prior_symbol
+    A_real = np.vstack([T.real, T.imag])
+    b_real = np.concatenate([b.real, b.imag])
+    return np.linalg.lstsq(A_real, b_real, rcond=None)[0]
+
+
 def _pll_track(r_pilot, pilot, r_data, n_data, *, eta_p, eta,
                kp: float = 0.8, ki: float = 0.2):
     """
@@ -494,7 +518,7 @@ def _pll_track(r_pilot, pilot, r_data, n_data, *, eta_p, eta,
 
     Loop gain is a DESIGN PARAMETER, not a constant. With the default
     kp=0.8, ki=0.2 the loop holds an aggregate rotation of 0.35 rad/symbol — the
-    severe case the block-fit equalizer fails at 6.9. The same loop with a
+    severe case the block-fit equalizer fails at 7.2. The same loop with a
     conservatively narrow gain (kp=0.25, ki=0.01) fails there too, which is worth
     knowing: "the tracking loop rescues it" is only true of a properly tuned loop,
     and a narrow one is the same trap in a different costume.
@@ -564,7 +588,7 @@ def ota_aggregate_hardware(grads, *, cfg: HardwareImpairments, snr_db: float = 1
         per device, before the sum : CFO ramp, phase-noise walk, sampling drift
         once, after the sum        : IQ image, AGC error, ADC depth, burst gaps
 
-    Three receivers and two transmitter framings:
+    Four receivers and two transmitter framings:
 
       'naive'      reads the superposition as if aligned. Fails under any
                    misalignment, as Tier 4 documents.
@@ -575,6 +599,13 @@ def ota_aggregate_hardware(grads, *, cfg: HardwareImpairments, snr_db: float = 1
                    midamble and then tracks the aggregate phase symbol by symbol.
                    This is the receiver a real burst modem uses, and it is the one
                    that can follow a rotation rather than assuming it away.
+      'genie'      NOT REALIZABLE. Handed the true combined channel (both
+                   aggregate taps) at every window, it solves the time-varying
+                   deconvolution. It bounds every receiver that models the
+                   sum's channel, however that receiver estimates it, which is
+                   what makes it the test of whether a failure is the
+                   receiver's or the channel's. It knows nothing the receiver
+                   chain does after the sum (ADC, IQ, AGC, burst gaps).
 
     `sub_blocks` applies to 'equalized': at 1 the midamble is sent once; at n > 1
     the frame is divided into n data segments, each with its own midamble, so the
@@ -587,9 +618,10 @@ def ota_aggregate_hardware(grads, *, cfg: HardwareImpairments, snr_db: float = 1
     """
     if rng is None:
         rng = np.random.default_rng()
-    if receiver not in ('naive', 'equalized', 'tracking'):
+    if receiver not in ('naive', 'equalized', 'tracking', 'genie'):
         raise ValueError(
-            f"receiver '{receiver}' not supported; use 'naive', 'equalized' or 'tracking'")
+            f"receiver '{receiver}' not supported; "
+            "use 'naive', 'equalized', 'tracking' or 'genie'")
     if sub_blocks < 1:
         raise ValueError("sub_blocks must be >= 1")
 
@@ -683,6 +715,15 @@ def ota_aggregate_hardware(grads, *, cfg: HardwareImpairments, snr_db: float = 1
         else:
             if receiver == 'naive':
                 estimate[start:start + n] = seg.real / np.sqrt(eta) / n_active
+            elif receiver == 'genie':
+                # The true aggregate taps at every window of this segment.
+                window = slice(cursor, cursor + n)
+                frac = np.clip(tau[:, window], 0.0, 1.0)
+                rot = np.exp(1j * theta[:, window])
+                g0 = (rot * (1.0 - frac)).sum(axis=0)
+                g1 = (rot * frac).sum(axis=0)
+                estimate[start:start + n] = _solve_segment_varying(
+                    seg, g0, g1, n, eta, prior_symbol)
             elif receiver == 'tracking':
                 if pending_pilot is None:
                     # No midamble seen yet: fall back to reading the raw

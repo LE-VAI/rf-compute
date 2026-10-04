@@ -335,41 +335,51 @@ class TestTrackingReceiver:
 
         A single-phase tracker follows ONE rotation. Independent per-device offsets
         give every device its own, so the tracked phase is a compromise rather than
-        a fix. The decoherence measurement (see the walkthrough) shows the SUM
-        survives — coherence only falls 0.212 -> 0.199 — so the information is in
-        the channel and the limit is the receiver's, not the medium's. This is why
-        the sync target is zero residual offset, not merely a small one.
+        a fix. The genie tests below measure how much of that is the receiver
+        and how much the channel. This is why the sync target is zero residual
+        offset, not merely a small one.
         """
         grads = _grads()
         cfg = HardwareImpairments(cfo_rad_per_symbol=0.35)
         tr = _median_nmse(grads, cfg, rx='tracking', trials=60)
         assert tr > 1.0
 
-    def test_per_device_offsets_do_not_destroy_the_superposition(self):
+    def test_genie_most_of_the_independent_offset_gap_is_the_receiver(self):
         """
-        Pins the mechanism behind the test above: independent CFO does NOT
-        decohere the sum. If it did, the failure would be physical and
-        unrecoverable; because it does not, the limit is architectural.
+        Is the independent-offset limit the receiver's or the channel's?
+
+        The genie is handed the true combined channel at every symbol, so it
+        bounds every receiver that models the sum's channel. Under independent
+        offsets it stays useful (NMSE < 1) and far below the single-phase
+        tracker: most of the tracker's failure is the receiver.
+
+        (This replaces an earlier coherence test, |sum_k e^{i theta_k}| / K. With
+        start phases uniform on (-pi, pi) that magnitude sits near
+        sqrt(pi / 4K) for ANY phase trajectory, including phases re-drawn every
+        symbol, so it could not tell a receiver limit from a channel limit.)
         """
-        n, length = 20, 20
-        idx = np.arange(length, dtype=float)
+        grads = _grads()
+        cfg = HardwareImpairments(cfo_rad_per_symbol=0.35)
+        genie = _median_nmse(grads, cfg, rx='genie', trials=80)
+        tr = _median_nmse(grads, cfg, rx='tracking', trials=80)
+        assert genie < 1.0
+        assert tr > 3 * genie
 
-        def coherence(cfg):
-            vals = []
-            for t in range(40):
-                r = np.random.default_rng(t)
-                common = r.uniform(-cfg.cfo_common_rad_per_symbol,
-                                   cfg.cfo_common_rad_per_symbol)
-                cfo = common + r.uniform(-cfg.cfo_rad_per_symbol,
-                                         cfg.cfo_rad_per_symbol, n)
-                phi = r.uniform(-np.pi, np.pi, n)
-                theta = phi[:, None] + cfo[:, None] * idx[None, :]
-                vals.append(np.mean(np.abs(np.exp(1j * theta).sum(axis=0)) / n))
-            return float(np.mean(vals))
-
-        clean = coherence(HardwareImpairments())
-        spread = coherence(HardwareImpairments(cfo_rad_per_symbol=0.35))
-        assert spread > 0.85 * clean
+    def test_genie_independent_offsets_still_cost_something(self):
+        """
+        ...and some of it is the channel. Knowing the combined channel perfectly,
+        a common rotation costs nothing, but a spread of independent offsets
+        still raises the error: device-to-device differences are smeared by
+        phases that now move. 'Mostly the receiver', not 'only the receiver'.
+        """
+        grads = _grads()
+        clean = _median_nmse(grads, HardwareImpairments(), rx='genie', trials=80)
+        common = _median_nmse(grads, HardwareImpairments(cfo_common_rad_per_symbol=0.35),
+                              rx='genie', trials=80)
+        spread = _median_nmse(grads, HardwareImpairments(cfo_rad_per_symbol=0.35),
+                              rx='genie', trials=80)
+        assert abs(common - clean) < 0.25 * clean
+        assert spread > 1.3 * clean
 
     def test_tracking_is_finite_and_correctly_shaped(self):
         """No NaN, no refusal to produce output, right length."""

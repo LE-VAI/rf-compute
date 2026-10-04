@@ -14,7 +14,7 @@ Three results, in order of how much they matter:
   1. The equalizer does NOT survive. A residual carrier offset of a few tenths
      of a radian per symbol takes its error from 0.44 to above 7 — worse than
      returning zero. It is not the ADC and it is not the IQ image: it is the
-     rotating phase, by a factor of 18 over a clean receiver.
+     rotating phase, by a factor of 16 over a clean receiver.
   2. A COMMON clock is not a rescue. Offsets shared by every device produce
      errors that ADD coherently, so a common offset can be worse than
      independent ones. The sync target is zero residual offset, not a common one.
@@ -109,26 +109,45 @@ def _row(cfg, label):
     e = _med(cfg, rx='equalized')
     t = _med(cfg, rx='tracking')
     print(f"   {label:<34}{e:>11.3f}{t:>10.3f}")
+    return e, t
 
 
 print(f"   {'scenario':<34}{'equalized':>11}{'tracking':>10}")
 print("   " + "-" * 55)
 _row(HardwareImpairments(), 'no CFO (reference)')
 _row(HardwareImpairments(cfo_common_rad_per_symbol=0.10), 'COMMON 0.10 (one rotation)')
-_row(HardwareImpairments(cfo_common_rad_per_symbol=0.35), 'COMMON 0.35 (7 rad/block)')
+eq_common, _ = _row(HardwareImpairments(cfo_common_rad_per_symbol=0.35), 'COMMON 0.35 (7 rad/block)')
 _row(HardwareImpairments(cfo_rad_per_symbol=0.05), 'INDEPENDENT 0.05 (19 rotations)')
-_row(HardwareImpairments(cfo_rad_per_symbol=0.35), 'INDEPENDENT 0.35')
+eq_indep, tr_indep = _row(HardwareImpairments(cfo_rad_per_symbol=0.35), 'INDEPENDENT 0.35')
 
 print("""
    A tuned tracking loop clears 7 rad of accumulated phase - 14x past the block
    fit's half-radian wall. So that budget is a property of the TOY RECEIVER, not
    of the channel. But a single-phase tracker follows ONE rotation: independent
    per-device offsets give every device its own, and the tracked phase becomes a
-   compromise. That limit is architectural, not physical - the superposition
-   itself barely decoheres (0.212 -> 0.199), so the information is there for a
-   receiver that can track more than one phase.""")
+   compromise.""")
 
-print("""
+# ── 5. Receiver or channel? ────────────────────────────────────────────────
+print("\n5. Is the independent-offset limit the receiver's, or the channel's?")
+print("   'genie' is handed the TRUE combined channel at every symbol. No real")
+print("   receiver has that; it bounds every receiver that models the sum's channel.")
+genie_clean = _med(HardwareImpairments(), rx='genie')
+genie_common = _med(HardwareImpairments(cfo_common_rad_per_symbol=0.35), rx='genie')
+genie_indep = _med(HardwareImpairments(cfo_rad_per_symbol=0.35), rx='genie')
+print(f"   {'scenario':<34}{'tracking':>10}{'genie':>9}")
+print("   " + "-" * 53)
+print(f"   {'no CFO (reference)':<34}{'':>10}{genie_clean:>9.3f}")
+print(f"   {'COMMON 0.35':<34}{'':>10}{genie_common:>9.3f}")
+print(f"   {'INDEPENDENT 0.35':<34}{tr_indep:>10.3f}{genie_indep:>9.3f}")
+print(f"""
+   With the combined channel known, independent offsets reach {genie_indep:.2f} - useful,
+   and far below the tracker's {tr_indep:.2f}. Most of that gap is the receiver. But
+   not all of it: a common rotation costs a genie nothing, while a spread still
+   raises its error from {genie_clean:.2f} to {genie_indep:.2f}, because device-to-device
+   differences are smeared by phases that now move. Mostly the receiver; partly
+   the channel.""")
+
+print(f"""
 What the numbers say:
   - The equalizer holds while the phase accumulated across the block stays
     under roughly half a radian. Above that it fails, and no amount of
@@ -137,8 +156,8 @@ What the numbers say:
   - A tracking receiver fixes that - but only a TUNED one. The same loop with a
     narrow gain (kp=0.25, ki=0.01) fails where kp=0.8, ki=0.2 holds.
   - A COMMON carrier offset is not the whole story. For the block fit, shared
-    offsets add coherently and can be WORSE than independent ones (22.7 vs 7.2
-    at 0.35). For a tracker it is the reverse: one shared rotation is exactly
+    offsets add coherently and can be WORSE than independent ones ({eq_common:.1f} vs
+    {eq_indep:.1f} at 0.35). For a tracker it is the reverse: one shared rotation is exactly
     what a single-phase loop can follow.
   - What does NOT matter, at these power levels: 10-bit quantization, a -30 dB
     IQ image, and a 1 dB AGC error are all within 25% of a clean float receiver.

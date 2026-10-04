@@ -185,10 +185,37 @@ fix:
 | **independent** 0.05 (19 rotations) | 1.294 | 1.215 |
 | **independent** 0.35 | 7.178 | 4.677 |
 
-This is *not* because the information is destroyed. Measuring the coherence of
-the superposition, `|Σ_k e^{iθ_k}|/K`, shows independent offsets barely touch it
-— **0.2123 clean vs 0.1994 with independent CFO at 0.35**, a 6% loss. The sum
-survives; the limit is the receiver's, not the medium's.
+### Receiver or channel? A genie bound
+
+How much of that is the receiver, and how much the channel? `receiver='genie'`
+answers it. The genie is **not realizable**: it is handed the true combined
+channel, both aggregate taps, at every symbol, and solves the time-varying
+deconvolution. That bounds every receiver that models the sum's channel, however
+it estimates it.
+
+| scenario | tracking | genie |
+|---|---|---|
+| no CFO | 0.576 | 0.449 |
+| **common** 0.35 | 0.640 | **0.441** |
+| **independent** 0.35 | 4.677 | **0.778** |
+
+Under independent offsets the genie stays useful (0.78, below the 1.0 line) and
+far below the tracker's 4.68: **most of the gap is the receiver.** Not all of it.
+A common rotation costs a genie nothing, but a spread still raises its error from
+0.45 to 0.78, because device-to-device differences are smeared by phases that now
+move. **Mostly the receiver; partly the channel.** The genie figures are medians
+over 120 draws; across 120 to 400 draws the independent case stays between 0.78
+and 0.86.
+
+> **Correction (2026-10-04).** An earlier version of this section cited the
+> coherence of the superposition, `|Σ_k e^{iθ_k}|/K`, as 0.2123 clean against
+> 0.1994 with independent offsets, "a 6% loss", and concluded that the limit was
+> architectural rather than physical. That measurement could not support the
+> conclusion. With start phases uniform on (−π, π), the magnitude sits near
+> √(π/4K) ≈ 0.198 for *any* phase trajectory, including phases re-drawn every
+> symbol, which leave nothing to track. The 6% gap was sampling noise over 40
+> draws, and the quoted figures did not reproduce from the test that cited them.
+> The genie bound above replaces it.
 
 Which sharpens the Tier 4-h conclusion rather than softening it: **the sync
 target is zero residual offset, not merely a small spread.** A common rotation is
@@ -228,10 +255,10 @@ that disagree.
 - **That budget is a receiver property, not a channel property.** A properly
   tuned second-order tracking loop clears 7 radians of accumulation — 14× the
   block fit's wall — and the loop gain has to be right, not merely present.
-- What no single-phase receiver fixes is a **spread** of independent offsets,
-  and the decoherence measurement shows why the blame is architectural: the
-  superposition survives (coherence 0.212 → 0.199), so the information is there
-  to be had by a receiver that can track more than one phase.
+- What no single-phase receiver fixes is a **spread** of independent offsets.
+  A genie handed the true combined channel shows that most of that failure is
+  the receiver (genie 0.78 against the tracker's 4.68), and some of it is the
+  channel (the genie's own error rises from 0.45 to 0.78).
 - The receiver-chain concerns (ADC depth, IQ image, AGC) are **not** the binding
   constraint. Effort spent there is effort not spent on the LO.
 
@@ -244,7 +271,8 @@ that disagree.
   tracking loop, or a multi-phase receiver.
 - That a real receiver cannot do better than a *single* tracking loop. A
   multi-phase or per-device estimator is the natural next rung and is not built
-  here; the independent-offset result bounds *this* receiver, not the art.
+  here. The genie says how much is on the table (from 4.68 down to about 0.78),
+  not that a realizable receiver reaches it.
 - That burst capture is fatal. It costs ~10× on its own and compounds the CFO
   failure, but it is second-order to the oscillator.
 
@@ -252,7 +280,7 @@ that disagree.
 
 ## The engineering consequence
 
-The 33 tests in `tests/test_hardware.py` pin these claims as **orderings and
+The 34 tests in `tests/test_hardware.py` pin these claims as **orderings and
 ratios**, not magic constants, so a change that breaks the physics fails while a
 change that merely reshuffles random draws does not. Six are worth knowing by
 name:
@@ -264,20 +292,21 @@ name:
 - `test_equalizer_holds_under_half_a_radian_accumulated` — the block-fit budget,
   crossed from both sides.
 - `test_tracking_rescues_a_common_rotation` — the tuned loop clears what the
-  block fit cannot (22.7 → under 0.75 at 7 rad accumulated).
+  block fit cannot (25.1 → 0.64 at 7 rad accumulated).
 - `test_loop_gain_is_a_real_parameter_not_a_formality` — a narrow loop fails
   where a tuned one holds.
 - `test_tracking_cannot_rescue_independent_offsets` — the structural limit, with
-  `test_per_device_offsets_do_not_destroy_the_superposition` pinning the
-  *mechanism* (the sum survives; the receiver is what cannot cope).
+  the two `test_genie_*` tests pinning how it splits: mostly the receiver
+  (genie under 1.0, tracker over 3× the genie), partly the channel (a spread
+  raises even the genie's error by over 30%).
 
 ## Going deeper
 
 - **Multi-phase estimation.** The independent-offset result is a bound on a
-  *single*-phase tracker. The channel coherence measurement says the information
-  survives, so a receiver that models several phase trajectories — or estimates
-  them per device from the aggregate — is the natural next rung and is genuinely
-  open here.
+  *single*-phase tracker. The genie bound says most of that gap is recoverable in
+  principle, so a receiver that models several phase trajectories, or estimates
+  the combined channel symbol by symbol, is the natural next rung and is
+  genuinely open here.
 - **The stronger receivers.** Shao, Gündüz & Liew 2022 (`hku-icl/MisAlignedOAC`)
   oversample with a whitened matched filter and decode with aligned-sample or
   sum-product ML estimators. Those would establish whether the residual gap at
