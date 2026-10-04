@@ -27,7 +27,7 @@ from .hardware import (
     survival_table, overhead_table,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __all__ = [
     'Operator', 'AirCompOperator', 'LatticeAirCompOperator',
     'FadingAirCompOperator', 'OTAAggregationOperator',

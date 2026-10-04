@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rf-compute"
-version = "0.1.1"
+version = "0.1.2"
 description = "Wave-domain computation kernel — one API across the four RF-as-compute lineages (metamaterials, AirComp, microwave photonics, spin-torque neuromorphic). Research and education surface."
 readme = "README.md"
 license = "MIT"
