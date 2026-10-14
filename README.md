@@ -4,7 +4,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-reduced-motion: reduce)" srcset="https://raw.githubusercontent.com/LE-VAI/rf-compute/main/docs/media/hero-poster.png">
-    <img src="https://raw.githubusercontent.com/LE-VAI/rf-compute/main/docs/media/hero-loop.webp" width="800" alt="Two carrier waves travel across the frame. Carrier A completes one cycle per loop and carrier B completes two. The bottom lane shows their sum, sampled as orange stems: the interference is the operation.">
+    <img src="https://raw.githubusercontent.com/LE-VAI/rf-compute/main/docs/media/hero-loop.webp" width="800" alt="Two carrier waves travel across the frame. Carrier A completes one cycle per loop and carrier B completes two. The bottom lane shows their sum, sampled as yellow stems: the interference is the operation.">
   </picture>
 </p>
 <p align="center"><sub>A 4-second loop. It plays once and rests, and shows a still frame if you prefer reduced motion. <a href="https://le-vai.github.io/LE-VAI/loops/#rf-compute">Watch it on repeat</a>.</sub></p>
